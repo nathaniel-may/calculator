@@ -12,7 +12,7 @@ object Main extends IOApp{
     case Nil          => IO.raiseError(noArgs).as(ExitCode.Error)
     case input :: Nil =>
       Calculator
-        .eval(input)
+        .run(input)
         .fold(IO.raiseError(_).as(ExitCode.Success), IO(_).as(ExitCode.Success))
   }
 }
