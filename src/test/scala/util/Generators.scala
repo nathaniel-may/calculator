@@ -38,6 +38,6 @@ object Generators {
   } yield seq.map {
     case Left(num) => num.toString
     case Right(op) => op.toString
-  } mkString(" ")
+  } mkString " "
 
 }
