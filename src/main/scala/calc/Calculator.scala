@@ -47,6 +47,15 @@ object Calculator {
       case (Nil, Operator(op, (_, Empty))) =>
         Failure(missingRightInput(op))
 
+      case (Nil, Operator(op, (Empty, _))) =>
+        Failure(missingRightInput(op))
+
+      case (Nil, cTree @ _) =>
+        Success(cTree)
+
+      case (Right(op) :: tail, cTree) =>
+        go(tail, Operator(op, (cTree, Empty)))
+
       case (Left(num) :: _, Literal(lit)) =>
         Failure(invalidSeq(s"$lit $num"))
 
@@ -56,7 +65,8 @@ object Calculator {
       case (Left(num) :: tail, op @ Operator(_, (in0, Empty))) =>
         go(tail, Operator(op.value, (in0, Literal(num))))
 
-      case (Right(op) :: tail, cTree) => go(tail, Operator(op, (cTree, Empty)))
+      case (Left(num) :: _, Operator(_, (_, in1))) =>
+        Failure(invalidSeq(s"$num $in1"))
     }
 
     go(input, Empty)
