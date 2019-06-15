@@ -69,5 +69,10 @@ object CalculatorProperties extends Properties("calculator") {
         .flatMap(Calculator.eval)
         .fold(_ => false, _ => true)
   }
+
+  property("calculator evaluates valid input") = forAllNoShrink(inputGen) {
+    input: String => Calculator.run(input)
+      .fold(_ => false, _ => true)
+  }
 }
 
