@@ -16,6 +16,7 @@ object Calculator {
 
   val emptyInput                 = new Exception(s"cannot run computation on empty input")
   def invalidElem(elem: String)  = new Exception(s"$elem is not a number or one of the following operators ${ops.mkString(", ")}")
+  def missingLeftInput(op: Op)   = new Exception(s"cannot start input with an operator: started with $op")
   def invalidSeq(seq: String)    = new Exception(s"$seq is not a valid sequence")
   val emptyTree                  = new Exception(s"cannot run computation on empty input")
   def missingRightInput(op: Op)  = new Exception(s"operator $op missing right-hand input")
@@ -52,6 +53,9 @@ object Calculator {
 
       case (Nil, cTree @ _) =>
         Success(cTree)
+
+      case (Right(op) :: _, Empty) =>
+        Failure(missingLeftInput(op))
 
       case (Right(op) :: tail, cTree) =>
         go(tail, Operator(op, (cTree, Empty)))

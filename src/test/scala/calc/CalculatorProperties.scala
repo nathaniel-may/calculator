@@ -32,5 +32,12 @@ object CalculatorProperties extends Properties("calculator") {
         Calculator.parse(seq)
           .fold(_ => false, _ => true)
     }
+
+  property("parser does not allow inputs that start with an operator") =
+    forAllNoShrink(seqGen) {
+      seq: List[Either[Double, Op]] =>
+        Calculator.parse(seq.tail)
+          .fold(_ => true, _ => false)
+    }
 }
 
