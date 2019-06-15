@@ -1,6 +1,6 @@
 package calc
 
-import cats.effect._
+import cats.effect.{IO, IOApp, ExitCode}
 import cats.syntax.all._
 
 object Main extends IOApp{
@@ -10,9 +10,8 @@ object Main extends IOApp{
   override def run(args: List[String]): IO[ExitCode] = args match {
     case _ :: _ :: _  => IO.raiseError(tooManyArgs).as(ExitCode.Error)
     case Nil          => IO.raiseError(noArgs).as(ExitCode.Error)
-    case input :: Nil =>
-      Calculator
-        .run(input)
-        .fold(IO.raiseError(_).as(ExitCode.Success), IO(_).as(ExitCode.Success))
+    case input :: Nil => Calculator
+      .run(input)
+      .fold(IO.raiseError(_).as(ExitCode.Success), output => IO(println(output)).as(ExitCode.Success))
   }
 }
