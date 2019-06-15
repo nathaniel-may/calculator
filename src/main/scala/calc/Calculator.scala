@@ -48,9 +48,6 @@ object Calculator {
       case (Nil, Operator(op, (_, Empty))) =>
         Failure(missingRightInput(op))
 
-      case (Nil, Operator(op, (Empty, _))) =>
-        Failure(missingRightInput(op))
-
       case (Nil, cTree @ _) =>
         Success(cTree)
 
