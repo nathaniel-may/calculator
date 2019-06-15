@@ -14,12 +14,16 @@ object Calculator {
 
   type EvalElem = Either[Double, Op]
 
-  val emptyInput                 = new Exception(s"cannot run computation on empty input")
-  def invalidElem(elem: String)  = new Exception(s"$elem is not a number or one of the following operators ${ops.mkString(", ")}")
-  def missingLeftInput(op: Op)   = new Exception(s"cannot start input with an operator: started with $op")
-  def invalidSeq(seq: String)    = new Exception(s"$seq is not a valid sequence")
-  val emptyTree                  = new Exception(s"cannot run computation on empty input")
-  def missingRightInput(op: Op)  = new Exception(s"operator $op missing right-hand input")
+  class CalcCompilationException(message: String) extends Exception(message)
+  class CalcRuntimeException(message: String)     extends Exception(message)
+
+  val emptyInput                 = new CalcCompilationException("cannot run computation on empty input")
+  def invalidElem(elem: String)  = new CalcCompilationException(s"$elem is not a number or one of the following operators ${ops.mkString(", ")}")
+  def missingLeftInput(op: Op)   = new CalcCompilationException(s"cannot start input with an operator: started with $op")
+  def invalidSeq(seq: String)    = new CalcCompilationException(s"$seq is not a valid sequence")
+  val emptyTree                  = new CalcCompilationException("cannot run computation on empty input")
+  def missingRightInput(op: Op)  = new CalcCompilationException(s"operator $op missing right-hand input")
+  val divByZero                  = new CalcRuntimeException("cannot divide by zero")
 
   def run(input: String): Try[Double] = for {
     elems  <- lex(input)
@@ -87,7 +91,7 @@ object Calculator {
                   case Add  => Success(l + r)
                   case Sub  => Success(l - r)
                   case Mult => Success(l * r)
-                  case Div  => Try(l / r)
+                  case Div  => Try(l / r).fold(_ => Failure(divByZero), Success(_))
                 }
     } yield result
   }

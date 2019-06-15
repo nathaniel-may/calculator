@@ -1,13 +1,14 @@
 package calc
 
 import org.scalacheck.Prop.{forAll, forAllNoShrink}
-import org.scalacheck.{Gen, Arbitrary, Properties}, Gen.nonEmptyListOf
+import org.scalacheck.{Arbitrary, Gen, Properties}
+import Gen.nonEmptyListOf
 import org.scalacheck.Arbitrary.{arbDouble, arbLong}
+
 import scala.util.Random
 import shuffle.FunctionalShuffle.shuffle
 import util.Generators._
-
-import calc.Calculator.Op
+import calc.Calculator.{CalcCompilationException, Op}
 
 
 object CalculatorProperties extends Properties("calculator") {
@@ -63,16 +64,26 @@ object CalculatorProperties extends Properties("calculator") {
         .eval(new Random(seed))
     }
 
-  property("evaluator runs") = forAllNoShrink(seqGen) {
+  property("evaluator runs without compilation errors") = forAllNoShrink(seqGen) {
     seq: List[Either[Double, Op]] =>
       Calculator.parse(seq)
         .flatMap(Calculator.eval)
-        .fold(_ => false, _ => true)
+        .fold(
+          {
+            case _: CalcCompilationException => false
+            case _ => true
+          },
+          _ => true)
   }
 
-  property("calculator evaluates valid input") = forAllNoShrink(inputGen) {
+  property("calculator evaluates valid input without compilation errors") = forAllNoShrink(inputGen) {
     input: String => Calculator.run(input)
-      .fold(_ => false, _ => true)
+      .fold(
+        {
+          case _: CalcCompilationException => false
+          case _ => true
+        },
+        _ => true)
   }
 }
 
