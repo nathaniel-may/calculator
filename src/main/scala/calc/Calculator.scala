@@ -87,12 +87,16 @@ object Calculator {
     case Operator(op, (lTree, rTree)) => for {
       l      <- eval(lTree)
       r      <- eval(rTree)
-      result <- op match {
-                  case Add  => Success(l + r)
-                  case Sub  => Success(l - r)
-                  case Mult => Success(l * r)
-                  case Div  => Try(l / r).fold(_ => Failure(divByZero), Success(_))
+      math   =  op match {
+                  case Add  => l + r
+                  case Sub  => l - r
+                  case Mult => l * r
+                  case Div  => l / r
                 }
+      result <- if (math == Double.NegativeInfinity || math == Double.PositiveInfinity)
+                  Failure(divByZero)
+                else
+                  Success(math)
     } yield result
   }
 
