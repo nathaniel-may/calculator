@@ -27,7 +27,7 @@ object Calculator {
     result <- eval(tree)
   } yield result
 
-  def lex(input: String): Try[List[EvalElem]] =
+  private[calc] def lex(input: String): Try[List[EvalElem]] =
     input.split(' ').toList.map {
       case ""  => Failure(emptyInput)
       case "+" => Success(Right(Add))
