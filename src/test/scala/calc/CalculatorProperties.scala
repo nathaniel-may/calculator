@@ -34,22 +34,22 @@ object CalculatorProperties extends Properties("calculator") {
 
   property("parser allows all inputs in the form { num (op num)* }") =
     forAllNoShrink(seqGen) {
-      seq: List[Either[Double, Op]] =>
+      seq: List[CalcTree] =>
         Calculator.parse(seq)
           .fold(_ => false, _ => true)
     }
 
   property("parser does not allow inputs that start with an operator") =
     forAllNoShrink(seqGen) {
-      seq: List[Either[Double, Op]] =>
+      seq: List[CalcTree] =>
         Calculator.parse(seq.tail)
           .fold(_ => true, _ => false)
     }
 
   property("parser does not allow inputs with two numbers in a row") =
     forAllNoShrink(seqGen, doubleGen, longGen) {
-      (seq: List[Either[Double, Op]], num: Double, seed: Long) => (for {
-        badSeq <- shuffle(Left(num) :: seq toStream)
+      (seq: List[CalcTree], num: Double, seed: Long) => (for {
+        badSeq <- shuffle(Literal(num) :: seq toStream)
       } yield Calculator.parse(badSeq.toList)
         .fold(_ => true, _ => false))
         .eval(new Random(seed))
@@ -57,15 +57,15 @@ object CalculatorProperties extends Properties("calculator") {
 
   property("parser does not allow inputs with two operators in a row") =
     forAllNoShrink(seqGen, opGen, longGen) {
-      (seq: List[Either[Double, Op]], op: Op, seed: Long) => (for {
-        badSeq <- shuffle(Right(op) :: seq toStream)
+      (seq: List[CalcTree], op: Op, seed: Long) => (for {
+        badSeq <- shuffle(Operator(op, (Empty, Empty)) :: seq toStream)
       } yield Calculator.parse(badSeq.toList)
         .fold(_ => true, _ => false))
         .eval(new Random(seed))
     }
 
   property("evaluator runs without compilation errors") = forAllNoShrink(seqGen) {
-    seq: List[Either[Double, Op]] =>
+    seq: List[CalcTree] =>
       Calculator.parse(seq)
         .flatMap(Calculator.eval)
         .fold(
