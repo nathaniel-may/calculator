@@ -3,7 +3,7 @@ package calc
 import scala.util.Try
 import Calculator.Op
 
-trait CalcTree
+sealed trait CalcTree
 object CalcTree {
   def validate(tree: CalcTree): Try[CalcTree] = ???
 }
