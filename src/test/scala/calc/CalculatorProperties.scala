@@ -62,5 +62,12 @@ object CalculatorProperties extends Properties("calculator") {
         .fold(_ => true, _ => false))
         .eval(new Random(seed))
     }
+
+  property("evaluator runs") = forAllNoShrink(seqGen) {
+    seq: List[Either[Double, Op]] =>
+      Calculator.parse(seq)
+        .flatMap(Calculator.eval)
+        .fold(_ => false, _ => true)
+  }
 }
 

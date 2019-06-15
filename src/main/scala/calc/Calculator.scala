@@ -6,11 +6,11 @@ import cats.implicits._
 
 object Calculator {
   trait Op
-  object Plus extends Op { override def toString: String = "+" }
+  object Add  extends Op { override def toString: String = "+" }
   object Sub  extends Op { override def toString: String = "-" }
   object Mult extends Op { override def toString: String = "*" }
   object Div  extends Op { override def toString: String = "/" }
-  val ops = List(Plus, Sub, Mult, Div)
+  val ops = List(Add, Sub, Mult, Div)
 
   type EvalElem = Either[Double, Op]
 
@@ -30,7 +30,7 @@ object Calculator {
   def lex(input: String): Try[List[EvalElem]] =
     input.split(' ').toList.map {
       case ""  => Failure(emptyInput)
-      case "+" => Success(Right(Plus))
+      case "+" => Success(Right(Add))
       case "-" => Success(Right(Sub))
       case "*" => Success(Right(Mult))
       case "/" => Success(Right(Div))
@@ -76,6 +76,20 @@ object Calculator {
     go(input, Empty)
   }
 
-  private[calc] def eval(parsed: CalcTree): Try[Double] = ???
+  //TODO deal with results that are outside the double representation
+  private[calc] def eval(parsed: CalcTree): Try[Double] = parsed match {
+    case Empty        => Failure(new Exception("Internal error: attempted to evaluate empty parse tree"))
+    case Literal(num) => Success(num)
+    case Operator(op, (lTree, rTree)) => for {
+      l      <- eval(lTree)
+      r      <- eval(rTree)
+      result <- op match {
+                  case Add  => Success(l + r)
+                  case Sub  => Success(l - r)
+                  case Mult => Success(l * r)
+                  case Div  => Try(l / r)
+                }
+    } yield result
+  }
 
 }
