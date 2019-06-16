@@ -105,14 +105,15 @@ object Calculator {
     @tailrec
     def evalPass0(ee: List[EvalElem], out: List[EvalElem]): List[EvalElem] = ee match {
       case (l @ Left(_)) :: Nil =>
-        l :: out.reverse
+        (l :: out) reverse
 
       case Left(l) :: Right(op: Order0Op) :: Left(r) :: tail =>
         evalPass0((Left(runOp(op, (l, r)).get): EvalElem) :: tail, out)
 
       case (l @ Left(_)) :: (op @ Right(_)) :: (r @ Left(_)) :: tail =>
-        evalPass0(r :: tail, l :: op :: out)
+        evalPass0(r :: tail, op :: l :: out)
 
+      // only unparsed inputs would reach here
       case _ =>
         throw boom
     }
@@ -126,7 +127,8 @@ object Calculator {
       case Left(l) :: Right(op) :: Left(r) :: tail =>
         evalPass1((Left(runOp(op, (l, r)).get): EvalElem) :: tail, out)
 
-      case _ => // only unparsed inputs would reach here
+      // only unparsed inputs would reach here
+      case _ =>
         throw boom
     }
 

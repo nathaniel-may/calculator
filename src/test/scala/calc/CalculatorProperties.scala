@@ -37,12 +37,8 @@ object CalculatorProperties extends Properties("calculator") {
     forAllNoShrink(seqGen) {
       seq: List[EvalElem] =>
         Calculator.parse(seq)
-          .fold(e => {println("^^^^^^^^"); println(e); printStackTrace(e); false }, _ => true)
+          .fold(_ => false, _ => true)
     }
-
-  //TODO this is bullshit
-  def printStackTrace(e: Throwable) =
-    e.getStackTrace.toList.map(println(_))
 
   property("parser does not allow inputs that start with an operator or empty inputs") =
     forAllNoShrink(seqGen) {
