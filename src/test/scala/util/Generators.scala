@@ -23,7 +23,7 @@ object Generators {
       }
 
       (go(x.map(Left(_)), y.map(Right(_)), List()) match {
-        case unchanged @  Nil              => unchanged
+        case              Nil              => Nil
         case unchanged @ (Left(_) :: _)    => unchanged
         case              Right(_) :: tail => tail
       }).reverse
