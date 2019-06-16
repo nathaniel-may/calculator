@@ -55,4 +55,11 @@ lazy val calculator = (project in file("."))
     libraryDependencies += "org.scalacheck"           %% "scalacheck"         % "1.14.0" % "test",
 
     testOptions in Test += Tests.Argument("-oDS"),
+
+    assemblyMergeStrategy in assembly := {
+      case PathList("META-INF", _ @ _*) => MergeStrategy.discard
+      case _                            => MergeStrategy.first
+    },
+
+    assemblyJarName in assembly := "calc.jar"
   )
