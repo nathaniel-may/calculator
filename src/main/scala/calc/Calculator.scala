@@ -3,6 +3,7 @@ package calc
 import scala.util.{Try, Success, Failure}
 import scala.annotation.tailrec
 import cats.implicits._
+import zipper._
 
 object Calculator {
   sealed trait Order0Op
@@ -15,6 +16,21 @@ object Calculator {
   val ops = List(Add, Sub, Mult, Div)
 
   type EvalElem = Either[Double, Op]
+
+  implicit val unzippableOps: Unzip[CalcTree] = new Unzip[CalcTree] {
+    override def unzip(node: CalcTree): List[CalcTree] = node match {
+      case Empty               => Nil
+      case Literal(_)          => Nil
+      case Operator(_, (l, r)) => List(l, r)
+    }
+
+    override def zip(node: CalcTree, children: List[CalcTree]): CalcTree = (node, children) match {
+      case (Empty,           _)           => Empty
+      case (Literal(_),      _)           => Empty
+      case (Operator(op, _), l :: r :: _) => Operator(op, (l, r))
+      case _                              => Empty
+    }
+  }
 
   class CalcCompilationException(message: String) extends Exception(message)
   class CalcRuntimeException(message: String)     extends Exception(message)
@@ -47,10 +63,15 @@ object Calculator {
       .sequence
 
   private[calc] def parse(input: List[CalcTree]): Try[CalcTree] = {
-    @tailrec
-    def pass0(in: List[CalcTree], out: List[CalcTree]): Try[List[CalcTree]] = in match {
+    def validate(in: List[CalcTree], err: Try[Unit]): Try[Unit] = in match {
       case Nil =>
-        Success(out.reverse)
+        err
+
+      case Empty :: _ =>
+        Failure(emptyInput)
+
+      case _ :: Empty :: _ =>
+        Failure(emptyInput)
 
       case Operator(op0, _) :: Operator(op1, _) :: _ =>
         Failure(invalidSeq(s"$op0 $op1"))
@@ -58,58 +79,75 @@ object Calculator {
       case Literal(l0) :: Literal(l1) :: _ =>
         Failure(invalidSeq(s"$l0 $l1"))
 
-      case Literal(l) :: Operator(op: Order0Op, _) :: Literal(r) :: tail =>
-        pass0(tail, Operator(op, (Literal(l), Literal(r))) :: out)
+      case Operator(op, _) :: Nil =>
+        Failure(missingRightInput(op))
 
-      case Operator(op: Order1Op, (l, r)) :: tail =>
-        pass0(tail, Operator(op, (l, r)) :: out)
+      case Literal(_) :: tail =>
+        validate(tail, err)
 
-      case _ =>
-        Failure(boom)
+      case Operator(_, _) :: tail =>
+        validate(tail, err)
     }
 
-    def pass1(in: List[CalcTree], out: List[CalcTree]): Try[List[CalcTree]] = in match {
+    @tailrec
+    def pushdown(in: List[CalcTree], out: List[Operator]): Try[List[Operator]] = in match {
       case Nil =>
         Success(out.reverse)
 
-      case Literal(l) :: Operator(op, (Empty, Empty)) :: Literal(r) :: tail =>
-        pass1(tail, Operator(op, (Literal(l), Literal(r))) :: out)
+      case Literal(l) :: Operator(op: Order0Op, _) :: Literal(r) :: tail =>
+        pushdown(tail, Operator(op, (Literal(l), Literal(r))) :: out)
 
-      case (l @ Operator(_, _)) :: Operator(op: Order1Op, _) :: (r @ Literal(_)) :: tail =>
-        pass1(tail, Operator(op, (l, r)) :: out)
+      case (op @ Operator(_: Order1Op, _)) :: tail =>
+        pushdown(tail, op :: out)
 
-      case (l @ Literal(_)) :: Operator(op: Order1Op, _) :: (r @ Operator(_, _)) :: tail =>
-        pass1(tail, Operator(op, (l, r)) :: out)
-
-      case (l @ Operator(_, _)) :: Operator(op: Order1Op, _) :: (r @ Operator(_, _)) :: tail =>
-        pass1(tail, Operator(op, (l, r)) :: out)
+        // I actually want to pattern match against op "not of type Order0Op"
+      case (l @ Literal(_)) :: Operator(op: Order1Op, _) :: tail =>
+        pushdown(tail, Operator(op, (l, Empty)) :: out)
 
       case _ =>
         Failure(boom)
     }
 
-    def finalPass(in: List[CalcTree], out: CalcTree): Try[CalcTree] = (in, out) match {
-      case (Nil, outTree) =>
-        Success(outTree)
+    def stitch(in: List[Operator]): CalcTree = {
+      @tailrec
+      def AddToRoot(root: Zipper[CalcTree], child: CalcTree): Option[CalcTree] = {
+        Try(root.moveDownRight) match {
+          case Success(zNext) if (zNext.focus match {
+            case Empty => true;
+            case _ => false
+          }) => Some(zNext.update(_ => child).commit)
 
-      case (h :: t, Empty) =>
-        finalPass(t, h)
+          case Success(zNext) => AddToRoot(zNext, child)
 
-      case (h :: t, Operator(op, (Empty, r))) =>
-        finalPass(t, Operator(op, (h, r)))
+          case _ => None
+        }
+      }
 
-      case (Operator(op, (l, Empty)) :: t, outTree) =>
-        finalPass(t, Operator(op, (l, outTree)))
+      @tailrec
+      def AddToChild(root: CalcTree, child: Zipper[CalcTree]): Option[CalcTree] = {
+        Try(child.moveDownLeft) match {
+          case Success(zNext) if (zNext.focus match {
+            case Empty => true;
+            case _ => false
+          }) => Some(zNext.update(_ => root).commit)
 
-      case _ =>
-        Failure(boom)
+          case Success(zNext) => AddToChild(root, zNext)
+
+          case _ => None
+        }
+      }
+
+      in.drop(1).foldLeft[CalcTree](in.head) { (tree, op) =>
+        AddToRoot(Zipper(tree), op)
+          .fold(AddToChild(tree, Zipper(op)))(Some(_))
+          .get // TODO
+      }
     }
 
     for {
-      pass0 <- pass0(input, List())
-      pass1 <- pass1(pass0, List())
-      all   <- finalPass(pass1, Empty)
-    } yield all
+      _   <- validate(input, Success(()))
+      ops <- pushdown(input, List())
+    } yield stitch(ops)
   }
 
   //TODO deal with results that are outside the double representation
