@@ -16,5 +16,7 @@ lazy val calculator = (project in file("."))
 
     libraryDependencies += "com.github.nathaniel-may" %  "functional-shuffle" % "1.0.0"  % "test",
     libraryDependencies += "org.scalatest"            %% "scalatest"          % "3.0.5"  % "test",
-    libraryDependencies += "org.scalacheck"           %% "scalacheck"         % "1.14.0" % "test"
+    libraryDependencies += "org.scalacheck"           %% "scalacheck"         % "1.14.0" % "test",
+
+    testOptions in Test += Tests.Argument("-oDF"),
   )

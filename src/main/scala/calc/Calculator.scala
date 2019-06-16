@@ -63,6 +63,16 @@ object Calculator {
       .sequence
 
   private[calc] def parse(input: List[CalcTree]): Try[CalcTree] = {
+    // TODO clunky
+    def validateStart(in: List[CalcTree]): Try[Unit] = in match {
+      case Operator(op, _) :: _ =>
+        Failure(missingLeftInput(op))
+
+      case _ =>
+        Success(())
+    }
+
+    @tailrec
     def validate(in: List[CalcTree], err: Try[Unit]): Try[Unit] = in match {
       case Nil =>
         err
@@ -97,12 +107,19 @@ object Calculator {
       case Literal(l) :: Operator(op: Order0Op, _) :: Literal(r) :: tail =>
         pushdown(tail, Operator(op, (Literal(l), Literal(r))) :: out)
 
+      case Operator(op: Order0Op, _) :: Literal(r) :: tail =>
+        pushdown(tail, Operator(op, (Empty, Literal(r))) :: out)
+
       case (op @ Operator(_: Order1Op, _)) :: tail =>
         pushdown(tail, op :: out)
 
-        // I actually want to pattern match against op "not of type Order0Op"
+      // I actually want to pattern match against op "not of type Order0Op"
       case (l @ Literal(_)) :: Operator(op: Order1Op, _) :: tail =>
         pushdown(tail, Operator(op, (l, Empty)) :: out)
+
+      // TODO this is cheating to get single literals to pass
+      case (l @ Literal(_)) :: tail =>
+        pushdown(tail, Operator(Mult, (l, Literal(1))) :: out)
 
       case _ =>
         Failure(boom)
@@ -110,41 +127,81 @@ object Calculator {
 
     def stitch(in: List[Operator]): CalcTree = {
       @tailrec
-      def AddToRoot(root: Zipper[CalcTree], child: CalcTree): Option[CalcTree] = {
+      def AddToRight(root: Zipper[CalcTree], child: CalcTree): Option[CalcTree] = {
         Try(root.moveDownRight) match {
           case Success(zNext) if (zNext.focus match {
             case Empty => true;
             case _ => false
           }) => Some(zNext.update(_ => child).commit)
 
-          case Success(zNext) => AddToRoot(zNext, child)
+          case Success(zNext) => AddToRight(zNext, child)
 
           case _ => None
         }
       }
 
       @tailrec
-      def AddToChild(root: CalcTree, child: Zipper[CalcTree]): Option[CalcTree] = {
-        Try(child.moveDownLeft) match {
+      def AddToLeft(root: Zipper[CalcTree], child: CalcTree): Option[CalcTree] = {
+        Try(root.moveDownLeft) match {
           case Success(zNext) if (zNext.focus match {
             case Empty => true;
             case _ => false
-          }) => Some(zNext.update(_ => root).commit)
+          }) => Some(zNext.update(_ => child).commit)
 
-          case Success(zNext) => AddToChild(root, zNext)
+          case Success(zNext) => AddToLeft(zNext, child)
 
           case _ => None
         }
       }
 
-      in.drop(1).foldLeft[CalcTree](in.head) { (tree, op) =>
-        AddToRoot(Zipper(tree), op)
-          .fold(AddToChild(tree, Zipper(op)))(Some(_))
-          .get // TODO
+      // TODO DELETE
+      def toString(tree: CalcTree): String = tree match {
+        case Empty => "EMPTY"
+        case Literal(l) => l.toString
+        case Operator(op, (l, r)) => s"${toString(l)} ${op.toString} ${toString(r)}"
       }
+
+      def mergeIntoTree(tree: CalcTree, op: Operator): CalcTree =
+        AddToRight(Zipper(tree), op)
+          .fold(AddToLeft(Zipper(tree), op))(Some(_))
+          .fold(AddToRight(Zipper(op), tree))(Some(_))
+          .fold(AddToLeft(Zipper(op), tree))(Some(_)) get // TODO
+
+      def mergeIntoOp(tree: CalcTree, op: Operator): CalcTree =
+        (AddToRight(Zipper(op), tree)
+          .fold(AddToLeft(Zipper(op), tree))(Some(_))
+          .fold(AddToRight(Zipper(tree), op))(Some(_))
+          .fold(AddToLeft(Zipper(tree), op))(Some(_)) match {
+            case None =>
+              println()
+              println("TREE &&&&&&&&&&&&&&&&&&&&&&")
+              println(toString(tree))
+              println("OP &&&&&&&&&&&&&&&&&&&&&&")
+              println(toString(op))
+              None
+            case x => x
+        }) get // TODO
+
+      in.drop(1).foldLeft[CalcTree](in.head) { (tree, op) => (tree, op) match {
+        // when it OOO isn't in play, operators that come first get evaluated first
+        case (t @ Operator(_: Order1Op, _), o @ Operator(_: Order1Op, _)) =>
+          mergeIntoOp(t, o)
+
+        // when it OOO isn't in play, operators that come first get evaluated first
+        case (t @ Operator(_: Order0Op, _), o @ Operator(_: Order0Op, _)) =>
+          mergeIntoOp(t, o)
+
+        // respect OOO if possible (if not possible it's already been accounted for)
+        case (t @ Operator(_: Order1Op, _), o @ Operator(_: Order0Op, _)) =>
+          mergeIntoOp(t, o)
+
+        case _ =>
+          mergeIntoTree(tree, op)
+      } }
     }
 
     for {
+      _   <- validateStart(input)
       _   <- validate(input, Success(()))
       ops <- pushdown(input, List())
     } yield stitch(ops)

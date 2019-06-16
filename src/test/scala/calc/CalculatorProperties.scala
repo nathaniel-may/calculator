@@ -32,12 +32,17 @@ object CalculatorProperties extends Properties("calculator") {
           .fold(_ => false, _ => true)
     }
 
+  //TODO: failing on pattern like: 5 + 106 / 5 - 1
   property("parser allows all inputs in the form { num (op num)* }") =
     forAllNoShrink(seqGen) {
       seq: List[CalcTree] =>
         Calculator.parse(seq)
-          .fold(_ => false, _ => true)
+          .fold(e => {println("^^^^^^^^"); println(e); printStackTrace(e); false }, _ => true)
     }
+
+  //TODO this is bullshit
+  def printStackTrace(e: Throwable) =
+    e.getStackTrace.toList.map(println(_))
 
   property("parser does not allow inputs that start with an operator") =
     forAllNoShrink(seqGen) {
