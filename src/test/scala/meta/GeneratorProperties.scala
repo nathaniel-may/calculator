@@ -3,16 +3,16 @@ package meta
 import org.scalacheck.Prop.forAllNoShrink
 import org.scalacheck.{Arbitrary, Properties}
 import util.Generators._
+
 import scala.annotation.tailrec
-import calc.Calculator.Op
-import calc.{CalcTree, Literal, Operator}
+import calc.Calculator.{EvalElem, Op}
 
 
 object GeneratorProperties extends Properties("generators") {
   implicit val arbOp: Arbitrary[Op] = Arbitrary(opGen)
 
   property("seq is always in the form { num (op num)* }") = forAllNoShrink(seqGen) {
-    seq: List[CalcTree] =>
+    seq: List[EvalElem] =>
       @tailrec
       def isAlternating(l: List[Either[_, _]]): Boolean = l match {
         case Nil                         => true
@@ -22,9 +22,8 @@ object GeneratorProperties extends Properties("generators") {
       }
 
       isAlternating(seq.map{
-        case Literal(num) => Left(num)
-        case Operator(op, _) => Right(op)
-        case _ => Left(0) // TODO should be unreachable
+        case Left(num) => Left(num)
+        case Right(op) => Right(op)
       })
   }
 }
