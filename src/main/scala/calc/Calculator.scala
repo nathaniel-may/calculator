@@ -25,7 +25,6 @@ object Calculator {
   def invalidElem(elem: String)  = new CalcCompilationException(s"$elem is not a number or one of the following operators ${ops.mkString(", ")}")
   def missingLeftInput(op: Op)   = new CalcCompilationException(s"cannot start input with an operator: started with $op")
   def invalidSeq(seq: String)    = new CalcCompilationException(s"$seq is not a valid sequence")
-  val emptyTree                  = new CalcCompilationException("cannot run computation on empty input")
   def missingRightInput(op: Op)  = new CalcCompilationException(s"operator $op missing right-hand input")
   val divByZero                  = new CalcRuntimeException("cannot divide by zero")
 
@@ -48,9 +47,10 @@ object Calculator {
       .sequence
 
   private[calc] def parse(input: List[EvalElem]): Try[List[EvalElem]] = {
-
-    def validate(in: List[EvalElem]): Try[Unit] = {
       def validateStart(in: List[EvalElem]): Try[Unit] = in match {
+        case Nil =>
+          Failure(emptyInput)
+
         case Right(op) :: _ =>
           Failure(missingLeftInput(op))
 
@@ -59,9 +59,9 @@ object Calculator {
       }
 
       @tailrec
-      def go(in: List[EvalElem], err: Try[Unit]): Try[Unit] = in match {
+      def go(in: List[EvalElem]): Try[Unit] = in match {
         case Nil =>
-          err
+          Success(())
 
         case Right(op0) :: Right(op1) :: _ =>
           Failure(invalidSeq(s"$op0 $op1"))
@@ -73,21 +73,16 @@ object Calculator {
           Failure(missingRightInput(op))
 
         case Left(_) :: tail =>
-          go(tail, err)
+          go(tail)
 
         case Right(_) :: tail =>
-          go(tail, err)
+          go(tail)
       }
 
       for {
-        _ <- validateStart(in)
-        _ <- go(in, Success(()))
-      } yield ()
-    }
-
-    for {
-      _ <- validate(input)
-    } yield input
+        _ <- validateStart(input)
+        _ <- go(input)
+      } yield input
   }
 
   private[calc] def eval(parsed: List[EvalElem]): Try[Double] = {
@@ -109,8 +104,8 @@ object Calculator {
     // Throws runtime exceptions TODO right choice? probs not.
     @tailrec
     def evalPass0(ee: List[EvalElem], out: List[EvalElem]): List[EvalElem] = ee match {
-      case Left(_) :: Nil =>
-        out
+      case (l @ Left(_)) :: Nil =>
+        l :: out.reverse
 
       case Left(l) :: Right(op: Order0Op) :: Left(r) :: tail =>
         evalPass0((Left(runOp(op, (l, r)).get): EvalElem) :: tail, out)
@@ -131,7 +126,7 @@ object Calculator {
       case Left(l) :: Right(op) :: Left(r) :: tail =>
         evalPass1((Left(runOp(op, (l, r)).get): EvalElem) :: tail, out)
 
-      case _ =>
+      case _ => // only unparsed inputs would reach here
         throw boom
     }
 
