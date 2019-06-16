@@ -20,13 +20,14 @@ object Calculator {
   class CalcCompilationException(message: String) extends Exception(message)
   class CalcRuntimeException(message: String)     extends Exception(message)
 
-  val boom                       = new CalcCompilationException("unknown compilation error") // TODO replace this with something more sane
+  // Some exception messages require triple quotes and trimming because of https://github.com/scala/bug/issues/6476
   val emptyInput                 = new CalcCompilationException("cannot run computation on empty input")
-  def invalidElem(elem: String)  = new CalcCompilationException(s"$elem is not a number or one of the following operators ${ops.mkString(", ")}")
+  def invalidElem(elem: String)  = new CalcCompilationException(s""" "$elem" is not a number or one of the following operators ${ops.mkString(", ")}""".trim)
   def missingLeftInput(op: Op)   = new CalcCompilationException(s"cannot start input with an operator: started with $op")
-  def invalidSeq(seq: String)    = new CalcCompilationException(s"$seq is not a valid sequence")
-  def missingRightInput(op: Op)  = new CalcCompilationException(s"operator $op missing right-hand input")
+  def invalidSeq(seq: String)    = new CalcCompilationException(s""" "$seq" is not a valid sequence""".trim)
+  def missingRightInput(op: Op)  = new CalcCompilationException(s"""operator "$op" missing right-hand input""")
   val divByZero                  = new CalcRuntimeException("cannot divide by zero")
+  val boom                       = new CalcCompilationException("unknown compilation error")
 
   def run(input: String): Try[Double] = for {
     elems  <- lex(input)
