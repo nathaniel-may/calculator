@@ -8,11 +8,12 @@ import org.scalacheck.Arbitrary.{arbDouble, arbLong}
 import scala.util.Random
 import shuffle.FunctionalShuffle.shuffle
 import util.Generators._
-import calc.Calculator.{CalcCompilationException, Op, EvalElem}
+import calc.Calculator.{CalcCompilationException, Tok, Number, Operation}
 
 
 object CalculatorProperties extends Properties("calculator") {
-  implicit val arbOp: Arbitrary[Op] = Arbitrary(opGen)
+  implicit val arbOp:  Arbitrary[Operation] = Arbitrary(opGen)
+  implicit val arbTok: Arbitrary[Tok]       = Arbitrary(tokGen)
   val doubleGen = arbDouble.arbitrary
   val longGen   = arbLong.arbitrary
 
@@ -22,11 +23,11 @@ object CalculatorProperties extends Properties("calculator") {
   }
 
   property("lexer allows all doubles and operators in any order") =
-    forAll(nonEmptyListOf(implicitly[Arbitrary[EvalElem]].arbitrary)) {
-      elems: List[EvalElem] =>
+    forAll(nonEmptyListOf(implicitly[Arbitrary[Tok]].arbitrary)) {
+      elems: List[Tok] =>
         Calculator.lex(elems.map {
-          case Right(op) => op.toString
-          case Left(num) => num.toString
+          case Operation(op) => op.toString
+          case Number(num) => num.toString
         }
           .mkString(" "))
           .fold(_ => false, _ => true)
@@ -35,22 +36,22 @@ object CalculatorProperties extends Properties("calculator") {
   //TODO: failing on pattern like: 5 + 106 / 5 - 1
   property("parser allows all inputs in the form { num (op num)* }") =
     forAllNoShrink(seqGen) {
-      seq: List[EvalElem] =>
+      seq: List[Tok] =>
         Calculator.parse(seq)
           .fold(_ => false, _ => true)
     }
 
   property("parser does not allow inputs that start with an operator or empty inputs") =
     forAllNoShrink(seqGen) {
-      seq: List[EvalElem] =>
+      seq: List[Tok] =>
         Calculator.parse(seq.tail)
           .fold(_ => true, _ => false)
     }
 
   property("parser does not allow inputs with two numbers in a row") =
-    forAllNoShrink(seqGen, doubleGen, longGen) {
-      (seq: List[EvalElem], num: Double, seed: Long) => (for {
-        badSeq <- shuffle(Left(num) :: seq toStream)
+    forAllNoShrink(seqGen, numberGen, longGen) {
+      (seq: List[Tok], num: Number, seed: Long) => (for {
+        badSeq <- shuffle(num :: seq toStream)
       } yield Calculator.parse(badSeq.toList)
         .fold(_ => true, _ => false))
         .eval(new Random(seed))
@@ -58,15 +59,15 @@ object CalculatorProperties extends Properties("calculator") {
 
   property("parser does not allow inputs with two operators in a row") =
     forAllNoShrink(seqGen, opGen, longGen) {
-      (seq: List[EvalElem], op: Op, seed: Long) => (for {
-        badSeq <- shuffle(Right(op) :: seq toStream)
+      (seq: List[Tok], op: Operation, seed: Long) => (for {
+        badSeq <- shuffle(op :: seq toStream)
       } yield Calculator.parse(badSeq.toList)
         .fold(_ => true, _ => false))
         .eval(new Random(seed))
     }
 
   property("evaluator runs without compilation errors") = forAllNoShrink(seqGen) {
-    seq: List[EvalElem] =>
+    seq: List[Tok] =>
       Calculator.parse(seq)
         .flatMap(Calculator.eval)
         .fold(

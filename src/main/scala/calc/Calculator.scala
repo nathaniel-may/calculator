@@ -5,17 +5,40 @@ import scala.annotation.tailrec
 import cats.implicits._
 
 object Calculator {
-  sealed trait OOO
-  sealed trait Order0Op extends OOO
-  sealed trait Order1Op extends OOO
-  sealed trait Op
-  object Add  extends Op with Order1Op { override def toString: String = "+" }
-  object Sub  extends Op with Order1Op { override def toString: String = "-" }
-  object Mult extends Op with Order0Op { override def toString: String = "*" }
-  object Div  extends Op with Order0Op { override def toString: String = "/" }
+
+  sealed trait Priority
+  case object First  extends Priority
+  case object Second extends Priority
+
+  sealed trait Op {
+    val priority: Priority
+  }
+
+  object Mult extends Op {
+    val priority = First
+    override def toString: String = "*"
+  }
+
+  object Div  extends Op {
+    val priority = First
+    override def toString: String = "/"
+  }
+
+  object Add  extends Op {
+    val priority = Second
+    override def toString: String = "+"
+  }
+
+  object Sub  extends Op {
+    val priority = Second
+    override def toString: String = "-"
+  }
+
   val ops = List(Add, Sub, Mult, Div)
 
-  type EvalElem = Either[Double, Op]
+  sealed trait Tok
+  case class Number(value: Double) extends Tok
+  case class Operation(value: Op)  extends Tok
 
   class CalcCompilationException(message: String) extends Exception(message)
   class CalcRuntimeException(message: String)     extends Exception(message)
@@ -35,24 +58,24 @@ object Calculator {
     result <- eval(valid)
   } yield result
 
-  private[calc] def lex(input: String): Try[List[EvalElem]] =
+  private[calc] def lex(input: String): Try[List[Tok]] =
     input.split(' ').toList.map {
       case ""  => Failure(emptyInput)
-      case "+" => Success(Right(Add))
-      case "-" => Success(Right(Sub))
-      case "*" => Success(Right(Mult))
-      case "/" => Success(Right(Div))
+      case "+" => Success(Operation(Add))
+      case "-" => Success(Operation(Sub))
+      case "*" => Success(Operation(Mult))
+      case "/" => Success(Operation(Div))
       case num => Try(num.toDouble)
-        .fold(_ => Failure(invalidElem(num)), double => Success(Left(double)))
+        .fold(_ => Failure(invalidElem(num)), double => Success(Number(double)))
     }
       .sequence
 
-  private[calc] def parse(input: List[EvalElem]): Try[List[EvalElem]] = {
-      def validateStart(in: List[EvalElem]): Try[Unit] = in match {
+  private[calc] def parse(input: List[Tok]): Try[List[Tok]] = {
+      def validateStart(in: List[Tok]): Try[Unit] = in match {
         case Nil =>
           Failure(emptyInput)
 
-        case Right(op) :: _ =>
+        case Operation(op) :: _ =>
           Failure(missingLeftInput(op))
 
         case _ =>
@@ -60,23 +83,23 @@ object Calculator {
       }
 
       @tailrec
-      def go(in: List[EvalElem]): Try[Unit] = in match {
+      def go(in: List[Tok]): Try[Unit] = in match {
         case Nil =>
           Success(())
 
-        case Right(op0) :: Right(op1) :: _ =>
+        case Operation(op0) :: Operation(op1) :: _ =>
           Failure(invalidSeq(s"$op0 $op1"))
 
-        case Left(l0) :: Left(l1) :: _ =>
+        case Number(l0) :: Number(l1) :: _ =>
           Failure(invalidSeq(s"$l0 $l1"))
 
-        case Right(op) :: Nil =>
+        case Operation(op) :: Nil =>
           Failure(missingRightInput(op))
 
-        case Left(_) :: tail =>
+        case Number(_) :: tail =>
           go(tail)
 
-        case Right(_) :: tail =>
+        case Operation(_) :: tail =>
           go(tail)
       }
 
@@ -86,7 +109,7 @@ object Calculator {
       } yield input
   }
 
-  private[calc] def eval(parsed: List[EvalElem]): Try[Double] = {
+  private[calc] def eval(parsed: List[Tok]): Try[Double] = {
     //TODO deal with results that are outside the double representation
     def runOp(op: Op, args: (Double, Double)): Try[Double] = {
       val math = (op, args) match {
@@ -104,29 +127,15 @@ object Calculator {
 
     // Throws runtime exceptions TODO right choice? probs not.
     @tailrec
-    def evalPass0(ee: List[EvalElem], out: List[EvalElem]): List[EvalElem] = ee match {
-      case (l @ Left(_)) :: Nil =>
+    def evalPass(ee: List[Tok], priority: Priority, out: List[Tok]): List[Tok] = ee match {
+      case (l @ Number(_)) :: Nil =>
         (l :: out) reverse
 
-      case Left(l) :: Right(op: Order0Op) :: Left(r) :: tail =>
-        evalPass0((Left(runOp(op, (l, r)).get): EvalElem) :: tail, out)
+      case Number(l) :: Operation(op) :: Number(r) :: tail if op.priority == priority =>
+        evalPass((Number(runOp(op, (l, r)).get): Tok) :: tail, priority, out)
 
-      case (l @ Left(_)) :: (op @ Right(_)) :: (r @ Left(_)) :: tail =>
-        evalPass0(r :: tail, op :: l :: out)
-
-      // only unparsed inputs would reach here
-      case _ =>
-        throw boom
-    }
-
-    // Throws runtime exceptions TODO right choice? probs not.
-    @tailrec
-    def evalPass1(ee: List[EvalElem], out: List[EvalElem]): Double = ee match {
-      case Left(result) :: Nil =>
-        result
-
-      case Left(l) :: Right(op) :: Left(r) :: tail =>
-        evalPass1((Left(runOp(op, (l, r)).get): EvalElem) :: tail, out)
+      case (l @ Number(_)) :: (op @ Operation(_)) :: (r @ Number(_)) :: tail =>
+        evalPass(r :: tail, priority, op :: l :: out)
 
       // only unparsed inputs would reach here
       case _ =>
@@ -134,8 +143,12 @@ object Calculator {
     }
 
     for {
-      pass0 <- Try(evalPass0(parsed, List.empty))
-      res   <- Try(evalPass1(pass0,  List.empty))
+      pass0 <- Try(evalPass(parsed, First,  List.empty))
+      pass1 <- Try(evalPass(pass0,  Second, List.empty))
+      res   <- pass1.headOption.fold[Try[Double]](Failure(boom)) {
+                 case Number(res) => Success(res)
+                 case _           => Failure(boom)
+               }
     } yield res
   }
 }

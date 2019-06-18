@@ -5,14 +5,14 @@ import org.scalacheck.{Arbitrary, Properties}
 import util.Generators._
 
 import scala.annotation.tailrec
-import calc.Calculator.{EvalElem, Op}
+import calc.Calculator.{Tok, Number, Operation}
 
 
 object GeneratorProperties extends Properties("generators") {
-  implicit val arbOp: Arbitrary[Op] = Arbitrary(opGen)
+  implicit val arbOp: Arbitrary[Operation] = Arbitrary(opGen)
 
   property("seq is always in the form { num (op num)* }") = forAllNoShrink(seqGen) {
-    seq: List[EvalElem] =>
+    seq: List[Tok] =>
       @tailrec
       def isAlternating(l: List[Either[_, _]]): Boolean = l match {
         case Nil                         => true
@@ -22,8 +22,8 @@ object GeneratorProperties extends Properties("generators") {
       }
 
       isAlternating(seq.map{
-        case Left(num) => Left(num)
-        case Right(op) => Right(op)
+        case Number(num)   => Left(num)
+        case Operation(op) => Right(op)
       })
   }
 }
