@@ -4,10 +4,13 @@
 
 A basic four function calculator which respects the order of operations with a commandline interface. This project was a good introduction into building a simple programming language.
 
-### Usage
-- Requires sbt to be installed
-- Clone repo
+### Examples
 
+#### Prerequisites
+- sbt must be installed
+- repo is cloned
+
+#### System Terminal
 ```
 > cd calculator/
 >
@@ -18,7 +21,7 @@ A basic four function calculator which respects the order of operations with a c
 > java -jar calc.jar "1 + 2 * 3"
 > 7.0
 >
-> java -jar calc.jar "1 + +"
+> java -jar calc.jar "1 + + 2"
 > "+ +" is not a valid sequence
 >
 > java -jar calc.jar "+"

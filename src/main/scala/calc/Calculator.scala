@@ -1,6 +1,7 @@
 package calc
 
 import scala.util.{Try, Success, Failure}
+import scala.annotation.tailrec
 import cats.implicits._
 
 object Calculator {
@@ -73,9 +74,22 @@ object Calculator {
   // uses shunting-yard algorithm to build a parse tree. Could build BNF instead, but this is more generic.
   // https://en.wikipedia.org/wiki/Shunting-yard_algorithm
   private[calc] def parse(input: List[Tok]): Try[ParseTree] = {
+    @tailrec
     def go(input: List[Tok], parseTree: List[ParseTree], shuntStack: List[TOp]): Try[ParseTree] = (input, parseTree, shuntStack) match {
       case (Nil, res ::  Nil, Nil) =>
         Success(res)
+
+      case (TOp(op) :: Nil, Nil, Nil) =>
+        Failure(missingLeftInput(op))
+
+      case (TNum(num0) :: TNum(num1) :: _, _, _) =>
+        Failure(invalidSeq(s"$num0 $num1"))
+
+      case (TOp(op0) :: TOp(op1) :: _, _, _) =>
+        Failure(invalidSeq(s"$op0 $op1"))
+
+      case (TOp(op) :: Nil, _, _) =>
+        Failure(missingRightInput(op))
 
       case (Nil, a :: b :: treeTail, TOp(op) :: shuntTail) =>
         go(Nil, POp(op, b, a) :: treeTail, shuntTail)
@@ -94,7 +108,6 @@ object Calculator {
         if shunted.priority >= op.priority =>
         go(toks, POp(shunted, b, a) :: treeTail, shuntTail)
 
-      // TODO add cases for explicit errors
       case _ =>
         Failure(boom)
     }
