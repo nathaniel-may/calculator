@@ -12,6 +12,8 @@ object Generators {
   val opGen:     Gen[TOp]  = Gen.oneOf(Calculator.ops).map(TOp)
   val numberGen: Gen[TNum] = arbDouble.arbitrary.map(d => TNum(BigDecimal(d)))
   val tokGen:    Gen[Tok]  = Gen.oneOf(opGen, numberGen)
+  val numOpGen: Gen[Char]  = Gen.numChar.flatMap { num =>
+      Gen.oneOf(num :: Calculator.ops.map(_.toString.charAt(0))) }
 
   val seqGen: Gen[List[Tok]] = {
     // this impl always ends with the last elem of x regardless of how long y is

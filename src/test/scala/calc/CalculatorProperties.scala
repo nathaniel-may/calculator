@@ -7,6 +7,7 @@ import org.scalacheck.Arbitrary.{arbDouble, arbLong}
 import scala.util.Random
 import shuffle.FunctionalShuffle.{shuffle, Rand}
 import scalaz.Monad
+import cats.effect.IO
 import util.Generators._
 import calc.Calculator.{Tok, TNum, TOp}
 import calc.Exceptions._
@@ -14,7 +15,7 @@ import calc.Exceptions._
 
 object CalculatorProperties extends Properties("calculator") {
   implicit val arbOp:  Arbitrary[TOp] = Arbitrary(opGen)
-  implicit val arbTok: Arbitrary[Tok]       = Arbitrary(tokGen)
+  implicit val arbTok: Arbitrary[Tok] = Arbitrary(tokGen)
   val doubleGen = arbDouble.arbitrary
   val longGen   = arbLong.arbitrary
 
@@ -86,11 +87,20 @@ object CalculatorProperties extends Properties("calculator") {
       _ => true)
   }
 
-  property("run throws a runtime exception when dividing by zero") = forAllNoShrink {
+  property("run throws a runtime exception when dividing by zero") = forAll {
     d: Double => Calculator.run(s"$d / 0").fold({
       case _: CalcRuntimeException => true
       case _                       => false },
       _ => false )
   }
+
+  property("main throws no ugly exceptions") = forAllNoShrink(inputGen, numOpGen, longGen) {
+    (in: String, char: Char, seed: Long) => Main
+      .run(List(shuffle(char #:: in.toStream).eval(new Random(seed)).mkString(" ")))
+      .handleErrorWith(_ => IO(false))
+      .flatMap(_ => IO(true))
+      .unsafeRunSync()
+  }
+
 }
 
