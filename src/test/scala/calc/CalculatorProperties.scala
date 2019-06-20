@@ -33,8 +33,7 @@ object CalculatorProperties extends Properties("calculator") {
           .mkString(" "))
           .fold(_ => false, _ => true)
     }
-
-  //TODO: failing on pattern like: 5 + 106 / 5 - 1
+  
   property("parser allows all inputs in the form { num (op num)* }") =
     forAllNoShrink(seqGen) {
       seq: List[Tok] =>
