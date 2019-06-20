@@ -11,14 +11,14 @@ class MainUnitTest extends FlatSpec with Matchers {
 
   it should "fail with no args" in {
     assertThrows[Exception] {
-      Main.run(List())
+      Main.go(List())
         .unsafeRunSync()
     }
   }
 
   it should "fail with too many args" in {
     assertThrows[Exception] {
-      Main.run(List("", ""))
+      Main.go(List("", ""))
         .unsafeRunSync()
     }
   }
