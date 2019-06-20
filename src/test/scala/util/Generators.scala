@@ -9,9 +9,9 @@ import calc.Calculator, Calculator.{Tok, TNum, TOp}
 
 object Generators {
 
-  val opGen:     Gen[TOp] = Gen.oneOf(Calculator.ops).map(TOp)
-  val numberGen: Gen[TNum]    = arbDouble.arbitrary.map(TNum)
-  val tokGen:    Gen[Tok]       = Gen.oneOf(opGen, numberGen)
+  val opGen:     Gen[TOp]  = Gen.oneOf(Calculator.ops).map(TOp)
+  val numberGen: Gen[TNum] = arbDouble.arbitrary.map(d => TNum(BigDecimal(d)))
+  val tokGen:    Gen[Tok]  = Gen.oneOf(opGen, numberGen)
 
   val seqGen: Gen[List[Tok]] = {
     // this impl always ends with the last elem of x regardless of how long y is

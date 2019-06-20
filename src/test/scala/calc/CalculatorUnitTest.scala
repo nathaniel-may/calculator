@@ -19,6 +19,11 @@ class CalculatorUnitTest extends FlatSpec with Matchers {
     Calculator.run("2 * 3 - 1 * 3") fold(fail(_), _ shouldBe 3)
   }
 
+  it should "handle numbers beyond the scale of Double" in {
+    Calculator.run(s"${Double.MaxValue} + ${Double.MaxValue}") fold(fail(_), _ > Double.MaxValue shouldBe true)
+    Calculator.run(s"${Double.MinValue} / 2")                  fold(fail(_), _ < Double.MaxValue shouldBe true)
+  }
+
   it should "throw the errors listed in the readme example" in {
     Calculator.run("1 + + 2")     fold(_ shouldBe a[InvalidSequenceErr],   _ => fail())
     Calculator.run("+")           fold(_ shouldBe a[MissingLeftInputErr],  _ => fail())

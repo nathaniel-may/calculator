@@ -2,6 +2,7 @@ package calc
 
 import scala.util.{Try, Success, Failure}
 import scala.annotation.tailrec
+import scala.math.BigDecimal
 import cats.implicits._
 import Exceptions._
 
@@ -39,10 +40,10 @@ object Calculator {
   val ops = List(Add, Sub, Mult, Div)
 
   sealed trait Tok
-  case class TNum(value: Double) extends Tok
-  case class TOp(value: Op)      extends Tok
+  case class TNum(value: BigDecimal) extends Tok
+  case class TOp(value: Op)          extends Tok
 
-  def run(input: String): Try[Double] = for {
+  def run(input: String): Try[BigDecimal] = for {
     elems  <- lex(input)
     valid  <- parse(elems)
     result <- eval(valid)
@@ -104,9 +105,8 @@ object Calculator {
     go(input, List.empty, List.empty)
   }
 
-  def eval(parsed: ParseTree): Try[Double] = {
-    //TODO deal with results that are outside the double representation
-    def runOp(op: Op, args: (Double, Double)): Try[Double] = (op, args) match {
+  def eval(parsed: ParseTree): Try[BigDecimal] = {
+    def runOp(op: Op, args: (BigDecimal, BigDecimal)): Try[BigDecimal] = (op, args) match {
       case (Add,  (l, r))            => Success(l + r)
       case (Sub,  (l, r))            => Success(l - r)
       case (Mult, (l, r))            => Success(l * r)

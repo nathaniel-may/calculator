@@ -33,7 +33,7 @@ object CalculatorProperties extends Properties("calculator") {
           .mkString(" "))
           .fold(_ => false, _ => true)
     }
-  
+
   property("parser allows all inputs in the form { num (op num)* }") =
     forAllNoShrink(seqGen) {
       seq: List[Tok] =>
