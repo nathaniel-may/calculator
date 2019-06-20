@@ -20,9 +20,9 @@ class CalculatorUnitTest extends FlatSpec with Matchers {
   }
 
   it should "throw the errors listed in the readme example" in {
-    Calculator.run("1 + + 2")     fold(_ shouldBe a[InvalidSequenceErr], _ => fail())
-    Calculator.run("+")           fold(_ shouldBe a[MissingLeftInputErr], _ => fail())
+    Calculator.run("1 + + 2")     fold(_ shouldBe a[InvalidSequenceErr],   _ => fail())
+    Calculator.run("+")           fold(_ shouldBe a[MissingLeftInputErr],  _ => fail())
     Calculator.run("5 +")         fold(_ shouldBe a[MissingRightInputErr], _ => fail())
-    Calculator.run("hello world") fold(_ shouldBe a[InvalidElementErr], _ => fail())
+    Calculator.run("hello world") fold(_ shouldBe a[InvalidElementErr],    _ => fail())
   }
 }
