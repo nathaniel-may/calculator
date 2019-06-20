@@ -8,7 +8,8 @@ import scala.util.Random
 import shuffle.FunctionalShuffle.{shuffle, Rand}
 import scalaz.Monad
 import util.Generators._
-import calc.Calculator.{CalcCompilationException, CalcRuntimeException, Tok, TNum, TOp}
+import calc.Calculator.{Tok, TNum, TOp}
+import calc.Exceptions._
 
 
 object CalculatorProperties extends Properties("calculator") {

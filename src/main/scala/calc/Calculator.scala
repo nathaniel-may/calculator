@@ -3,6 +3,7 @@ package calc
 import scala.util.{Try, Success, Failure}
 import scala.annotation.tailrec
 import cats.implicits._
+import Exceptions._
 
 object Calculator {
 
@@ -41,18 +42,6 @@ object Calculator {
   case class TNum(value: Double) extends Tok
   case class TOp(value: Op)      extends Tok
 
-  class CalcCompilationException(message: String) extends Exception(message)
-  class CalcRuntimeException(message: String)     extends Exception(message)
-
-  // Some exception messages require triple quotes and trimming because of https://github.com/scala/bug/issues/6476
-  val emptyInput                 = new CalcCompilationException("cannot run computation on empty input")
-  def invalidElem(elem: String)  = new CalcCompilationException(s""" "$elem" is not a number or one of the following operators ${ops.mkString(", ")}""".trim)
-  def missingLeftInput(op: Op)   = new CalcCompilationException(s"cannot start input with an operator: started with $op")
-  def invalidSeq(seq: String)    = new CalcCompilationException(s""" "$seq" is not a valid sequence""".trim)
-  def missingRightInput(op: Op)  = new CalcCompilationException(s"""operator "$op" missing right-hand input""")
-  val divByZero                  = new CalcRuntimeException("cannot divide by zero")
-  val boom                       = new CalcCompilationException("unknown compilation error")
-
   def run(input: String): Try[Double] = for {
     elems  <- lex(input)
     valid  <- parse(elems)
@@ -61,13 +50,13 @@ object Calculator {
 
   private[calc] def lex(input: String): Try[List[Tok]] =
     input.split(' ').toList.map {
-      case ""  => Failure(emptyInput)
+      case ""  => Failure(new EmptyInputErr())
       case "+" => Success(TOp(Add))
       case "-" => Success(TOp(Sub))
       case "*" => Success(TOp(Mult))
       case "/" => Success(TOp(Div))
       case num => Try(num.toDouble)
-        .fold(_ => Failure(invalidElem(num)), double => Success(TNum(double)))
+        .fold(_ => Failure(InvalidElementErr.from(num)), double => Success(TNum(double)))
     }
       .sequence
 
@@ -80,16 +69,16 @@ object Calculator {
         Success(res)
 
       case (TOp(op) :: Nil, Nil, Nil) =>
-        Failure(missingLeftInput(op))
+        Failure(MissingLeftInputErr.from(op))
 
       case (TNum(num0) :: TNum(num1) :: _, _, _) =>
-        Failure(invalidSeq(s"$num0 $num1"))
+        Failure(InvalidSequenceErr.from(s"$num0 $num1"))
 
       case (TOp(op0) :: TOp(op1) :: _, _, _) =>
-        Failure(invalidSeq(s"$op0 $op1"))
+        Failure(InvalidSequenceErr.from(s"$op0 $op1"))
 
       case (TOp(op) :: Nil, _, _) =>
-        Failure(missingRightInput(op))
+        Failure(MissingRightInputErr.from(op))
 
       case (Nil, a :: b :: treeTail, TOp(op) :: shuntTail) =>
         go(Nil, POp(op, b, a) :: treeTail, shuntTail)
@@ -109,7 +98,7 @@ object Calculator {
         go(toks, POp(shunted, b, a) :: treeTail, shuntTail)
 
       case _ =>
-        Failure(boom)
+        Failure(new UnknownCompilationErr())
     }
 
     go(input, List.empty, List.empty)
@@ -122,7 +111,7 @@ object Calculator {
       case (Sub,  (l, r))            => Success(l - r)
       case (Mult, (l, r))            => Success(l * r)
       case (Div,  (l, r)) if r != 0  => Success(l / r)
-      case (Div,  (_, _))            => Failure(divByZero)
+      case (Div,  (_, _))            => Failure(new DivideByZeroErr)
     }
 
     parsed match {
