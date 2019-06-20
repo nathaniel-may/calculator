@@ -5,12 +5,12 @@ import Gen.nonEmptyListOf
 import org.scalacheck.Arbitrary.arbDouble
 
 import scala.annotation.tailrec
-import calc.Calculator, Calculator.{Tok, Number, Operation}
+import calc.Calculator, Calculator.{Tok, TNum, TOp}
 
 object Generators {
 
-  val opGen:     Gen[Operation] = Gen.oneOf(Calculator.ops).map(Operation)
-  val numberGen: Gen[Number]    = arbDouble.arbitrary.map(Number)
+  val opGen:     Gen[TOp] = Gen.oneOf(Calculator.ops).map(TOp)
+  val numberGen: Gen[TNum]    = arbDouble.arbitrary.map(TNum)
   val tokGen:    Gen[Tok]       = Gen.oneOf(opGen, numberGen)
 
   val seqGen: Gen[List[Tok]] = {
@@ -43,8 +43,8 @@ object Generators {
   val inputGen: Gen[String] = for {
     seq <- seqGen
   } yield seq.map {
-    case Number(num)   => num.toString
-    case Operation(op) => op.toString
+    case TNum(num)   => num.toString
+    case TOp(op) => op.toString
   } mkString " "
 
 }

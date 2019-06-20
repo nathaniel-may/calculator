@@ -1,44 +1,44 @@
 package calc
 
 import scala.util.{Try, Success, Failure}
-import scala.annotation.tailrec
 import cats.implicits._
 
 object Calculator {
 
-  sealed trait Priority
-  case object First  extends Priority
-  case object Second extends Priority
+  object Priority extends Enumeration {
+    type Priority = Value
+    val Second, First = Value
+  }
 
   sealed trait Op {
-    val priority: Priority
+    val priority: Priority.Priority
   }
 
   object Mult extends Op {
-    val priority = First
+    val priority = Priority.First
     override def toString: String = "*"
   }
 
   object Div  extends Op {
-    val priority = First
+    val priority = Priority.First
     override def toString: String = "/"
   }
 
   object Add  extends Op {
-    val priority = Second
+    val priority = Priority.Second
     override def toString: String = "+"
   }
 
   object Sub  extends Op {
-    val priority = Second
+    val priority = Priority.Second
     override def toString: String = "-"
   }
 
   val ops = List(Add, Sub, Mult, Div)
 
   sealed trait Tok
-  case class Number(value: Double) extends Tok
-  case class Operation(value: Op)  extends Tok
+  case class TNum(value: Double) extends Tok
+  case class TOp(value: Op)      extends Tok
 
   class CalcCompilationException(message: String) extends Exception(message)
   class CalcRuntimeException(message: String)     extends Exception(message)
@@ -61,94 +61,67 @@ object Calculator {
   private[calc] def lex(input: String): Try[List[Tok]] =
     input.split(' ').toList.map {
       case ""  => Failure(emptyInput)
-      case "+" => Success(Operation(Add))
-      case "-" => Success(Operation(Sub))
-      case "*" => Success(Operation(Mult))
-      case "/" => Success(Operation(Div))
+      case "+" => Success(TOp(Add))
+      case "-" => Success(TOp(Sub))
+      case "*" => Success(TOp(Mult))
+      case "/" => Success(TOp(Div))
       case num => Try(num.toDouble)
-        .fold(_ => Failure(invalidElem(num)), double => Success(Number(double)))
+        .fold(_ => Failure(invalidElem(num)), double => Success(TNum(double)))
     }
       .sequence
 
-  private[calc] def parse(input: List[Tok]): Try[List[Tok]] = {
-      def validateStart(in: List[Tok]): Try[Unit] = in match {
-        case Nil =>
-          Failure(emptyInput)
+  // uses shunting-yard algorithm to build a parse tree. Could build BNF instead, but this is more generic.
+  // https://en.wikipedia.org/wiki/Shunting-yard_algorithm
+  private[calc] def parse(input: List[Tok]): Try[ParseTree] = {
+    def go(input: List[Tok], parseTree: List[ParseTree], shuntStack: List[TOp]): Try[ParseTree] = (input, parseTree, shuntStack) match {
+      case (Nil, res ::  Nil, Nil) =>
+        Success(res)
 
-        case Operation(op) :: _ =>
-          Failure(missingLeftInput(op))
+      case (Nil, a :: b :: treeTail, TOp(op) :: shuntTail) =>
+        go(Nil, POp(op, b, a) :: treeTail, shuntTail)
 
-        case _ =>
-          Success(())
-      }
+      case (TNum(num) :: tail, tree, stack) =>
+        go(tail, PNum(num) :: tree, stack)
 
-      @tailrec
-      def go(in: List[Tok]): Try[Unit] = in match {
-        case Nil =>
-          Success(())
+      case (TOp(op) :: tail, tree, Nil) =>
+        go(tail, tree, TOp(op) :: Nil)
 
-        case Operation(op0) :: Operation(op1) :: _ =>
-          Failure(invalidSeq(s"$op0 $op1"))
+      case (TOp(op) :: tail, tree, stack @ TOp(shunted) :: Nil)
+        if shunted.priority < op.priority =>
+        go(tail, tree, TOp(op) :: stack)
 
-        case Number(l0) :: Number(l1) :: _ =>
-          Failure(invalidSeq(s"$l0 $l1"))
+      case (toks @ TOp(op) :: _, a :: b :: treeTail, TOp(shunted) :: shuntTail)
+        if shunted.priority >= op.priority =>
+        go(toks, POp(shunted, b, a) :: treeTail, shuntTail)
 
-        case Operation(op) :: Nil =>
-          Failure(missingRightInput(op))
+      // TODO add cases for explicit errors
+      case _ =>
+        Failure(boom)
+    }
 
-        case Number(_) :: tail =>
-          go(tail)
-
-        case Operation(_) :: tail =>
-          go(tail)
-      }
-
-      for {
-        _ <- validateStart(input)
-        _ <- go(input)
-      } yield input
+    go(input, List.empty, List.empty)
   }
 
-  private[calc] def eval(parsed: List[Tok]): Try[Double] = {
+  def eval(parsed: ParseTree): Try[Double] = {
     //TODO deal with results that are outside the double representation
-    def runOp(op: Op, args: (Double, Double)): Try[Double] = {
-      val math = (op, args) match {
-        case (Add,  (l, r)) => l + r
-        case (Sub,  (l, r)) => l - r
-        case (Mult, (l, r)) => l * r
-        case (Div,  (l, r)) => l / r
-      }
-
-      if (math == Double.NegativeInfinity || math == Double.PositiveInfinity)
-        Failure(divByZero)
-      else
-        Success(math)
+    def runOp(op: Op, args: (Double, Double)): Try[Double] = (op, args) match {
+      case (Add,  (l, r))            => Success(l + r)
+      case (Sub,  (l, r))            => Success(l - r)
+      case (Mult, (l, r))            => Success(l * r)
+      case (Div,  (l, r)) if r != 0  => Success(l / r)
+      case (Div,  (_, _))            => Failure(divByZero)
     }
 
-    // Throws runtime exceptions TODO right choice? probs not.
-    @tailrec
-    def evalPass(ee: List[Tok], priority: Priority, out: List[Tok]): List[Tok] = ee match {
-      case (l @ Number(_)) :: Nil =>
-        (l :: out) reverse
+    parsed match {
+      case PNum(answer) =>
+        Success(answer)
 
-      case Number(l) :: Operation(op) :: Number(r) :: tail if op.priority == priority =>
-        evalPass((Number(runOp(op, (l, r)).get): Tok) :: tail, priority, out)
-
-      case (l @ Number(_)) :: (op @ Operation(_)) :: (r @ Number(_)) :: tail =>
-        evalPass(r :: tail, priority, op :: l :: out)
-
-      // only unparsed inputs would reach here
-      case _ =>
-        throw boom
+      case POp(op, param0, param1) =>
+        for {
+          p0  <- eval(param0)
+          p1  <- eval(param1)
+          ans <- runOp(op, (p0, p1))
+        } yield ans
     }
-
-    for {
-      pass0 <- Try(evalPass(parsed, First,  List.empty))
-      pass1 <- Try(evalPass(pass0,  Second, List.empty))
-      res   <- pass1.headOption.fold[Try[Double]](Failure(boom)) {
-                 case Number(res) => Success(res)
-                 case _           => Failure(boom)
-               }
-    } yield res
   }
 }

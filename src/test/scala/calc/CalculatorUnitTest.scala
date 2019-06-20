@@ -1,30 +1,11 @@
 package calc
 
-import calc.Calculator.CalcRuntimeException
 import org.scalatest._
 
 
 class CalculatorUnitTest extends FlatSpec with Matchers {
 
-  "A Calculator" should "throw a runtime exception when dividing by zero" in {
-    Calculator.run("1 / 0").fold(
-      {
-        case _: CalcRuntimeException => true
-        case _                       => fail()
-      },
-      _ => fail()
-    )
-
-    Calculator.run("-1 / 0").fold(
-      {
-        case _: CalcRuntimeException => true
-        case _                       => fail()
-      },
-      _ => fail()
-    )
-  }
-
-  it should "evaluate to the correct answer when order of operations doesn't matter" in {
+  "A Calculator" should "evaluate to the correct answer when order of operations doesn't matter" in {
     Calculator.run("1 + 2 + 3 - 6").fold(fail(_), _ shouldBe 0)
     Calculator.run("1 * 2 + 3 - 4").fold(fail(_), _ shouldBe 1)
     Calculator.run("2 / 2 + 3 - 2").fold(fail(_), _ shouldBe 2)
