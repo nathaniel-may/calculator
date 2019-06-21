@@ -51,7 +51,7 @@ object Calculator {
 
   private[calc] def lex(input: String): Try[List[Tok]] =
     input.split(' ').toList.map {
-      case ""  => Failure(new EmptyInputErr())
+      case ""  => Failure(new EmptyInputErr)
       case "+" => Success(TOp(Add))
       case "-" => Success(TOp(Sub))
       case "*" => Success(TOp(Mult))
@@ -99,7 +99,7 @@ object Calculator {
         go(toks, POp(shunted, b, a) :: treeTail, shuntTail)
 
       case _ =>
-        Failure(new UnknownCompilationErr())
+        Failure(new UnknownCompilationErr)
     }
 
     go(input, List.empty, List.empty)
@@ -114,14 +114,15 @@ object Calculator {
       case (Div,  (_, _))            => Failure(new DivideByZeroErr)
     }
 
+    // stack overflow possible
     parsed match {
       case PNum(answer) =>
         Success(answer)
 
       case POp(op, param0, param1) =>
         for {
-          p0  <- eval(param0)
-          p1  <- eval(param1)
+          p0 <- eval(param0)
+          p1 <- eval(param1)
           ans <- runOp(op, (p0, p1))
         } yield ans
     }

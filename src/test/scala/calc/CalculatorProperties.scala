@@ -1,13 +1,16 @@
 package calc
 
+// Scalacheck
 import org.scalacheck.Prop.{forAll, forAllNoShrink}
-import org.scalacheck.{Arbitrary, Gen, Properties}
-import Gen.nonEmptyListOf
+import org.scalacheck.{Arbitrary, Gen, Properties}, Gen.nonEmptyListOf
 import org.scalacheck.Arbitrary.{arbDouble, arbLong}
+
+// Scala
+import scalaz.Monad
 import scala.util.Random
 import shuffle.FunctionalShuffle.{shuffle, Rand}
-import scalaz.Monad
-import cats.effect.IO
+
+// Project
 import util.Generators._
 import calc.Calculator.{Tok, TNum, TOp}
 import calc.Exceptions._
@@ -92,14 +95,6 @@ object CalculatorProperties extends Properties("calculator") {
       case _: CalcRuntimeException => true
       case _                       => false },
       _ => false )
-  }
-
-  property("main throws no ugly exceptions") = forAllNoShrink(inputGen, numOpGen, longGen) {
-    (in: String, char: Char, seed: Long) => Main
-      .run(List(shuffle(char #:: in.toStream).eval(new Random(seed)).mkString(" ")))
-      .handleErrorWith(_ => IO(false))
-      .flatMap(_ => IO(true))
-      .unsafeRunSync()
   }
 
 }

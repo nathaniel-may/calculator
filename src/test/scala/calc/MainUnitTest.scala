@@ -23,4 +23,11 @@ class MainUnitTest extends FlatSpec with Matchers {
     }
   }
 
+  it should "not throw loudly to the user" in {
+    noException should be thrownBy Calculator.run("1 + + 2")
+    noException should be thrownBy Calculator.run("+")
+    noException should be thrownBy Calculator.run("5 +")
+    noException should be thrownBy Calculator.run("hello world")
+  }
+
 }
