@@ -20,10 +20,10 @@ private[calc] object Parser {
         Failure(MissingLeftInputErr.from(op))
 
       case (TNum(num0) :: TNum(num1) :: _, _, _) =>
-        Failure(InvalidSequenceErr.from(s"$num0 $num1"))
+        Failure(InvalidSequenceErr.from(s"$num0$num1"))
 
       case (TOp(op0) :: TOp(op1) :: _, _, _) =>
-        Failure(InvalidSequenceErr.from(s"$op0 $op1"))
+        Failure(InvalidSequenceErr.from(s"$op0$op1"))
 
       case (TOp(op) :: Nil, _, _) =>
         Failure(MissingRightInputErr.from(op))
