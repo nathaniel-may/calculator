@@ -3,7 +3,6 @@ package calc
 // Scalacheck
 import org.scalacheck.Prop.{forAll, forAllNoShrink}
 import org.scalacheck.{Arbitrary, Gen, Properties}, Gen.nonEmptyListOf
-import org.scalacheck.Arbitrary.{arbDouble, arbLong}
 
 // Scala
 import scalaz.Monad
