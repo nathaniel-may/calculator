@@ -5,8 +5,8 @@ import org.scalacheck.Prop.forAll
 import org.scalacheck.{Arbitrary, Gen, Properties}, Gen.nonEmptyListOf
 
 // Project
-import util.Arbs._
-import calc.Calculator.{Tok, TNum, TOp}
+import calc.util.Arbs._
+import calc.Language.{Tok, TNum, TOp}
 
 class LexerProperties extends Properties("Lexer") {
 

@@ -2,7 +2,7 @@ package calc
 
 import cats.implicits._
 import cats.implicits.catsStdInstancesForTry
-import calc.Calculator.{Add, Div, Mult, Sub, TNum, TOp, Tok}
+import calc.Language.{Add, Div, Mult, Sub, TNum, TOp, Tok}
 import calc.Exceptions.{EmptyInputErr, InvalidElementErr}
 
 import scala.util.{Failure, Success, Try}

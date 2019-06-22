@@ -1,11 +1,11 @@
-package meta
+package calc.meta
 
 import org.scalacheck.Prop.forAllNoShrink
 import org.scalacheck.{Arbitrary, Properties}
-import util.Generators._
+import calc.util.Generators._
 
 import scala.annotation.tailrec
-import calc.Calculator.{Tok, TNum, TOp}
+import calc.Language.{Tok, TNum, TOp}
 
 
 object GeneratorProperties extends Properties("generators") {

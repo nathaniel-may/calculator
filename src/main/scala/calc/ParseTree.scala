@@ -1,7 +1,7 @@
 package calc
 
 import scala.math.BigDecimal
-import Calculator.Op
+import Language.Op
 
 trait ParseTree
 case class PNum(value: BigDecimal) extends ParseTree

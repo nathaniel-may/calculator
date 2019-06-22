@@ -10,9 +10,9 @@ import scalaz.Monad
 import shuffle.FunctionalShuffle.{Rand, shuffle}
 
 // Project
-import calc.Calculator.{Tok, TNum, TOp}
+import calc.Language.{Tok, TNum, TOp}
 import calc.Exceptions.CalcCompilationException
-import util.Generators.{longGen, numberGen, opGen, seqGen}
+import calc.util.Generators.{longGen, numberGen, opGen, seqGen}
 
 class ParserProperties extends Properties("Parser") {
 
@@ -48,17 +48,5 @@ class ParserProperties extends Properties("Parser") {
       }).map { stream => Parser.run(stream.toList).fold(_ => true, _ => false ) }
         .eval(new Random(seed))
     }
-
-  property("evaluator runs without compilation errors") = forAllNoShrink(seqGen) {
-    seq: List[Tok] =>
-      Parser.run(seq)
-        .flatMap(Calculator.eval)
-        .fold(
-          {
-            case _: CalcCompilationException => false
-            case _ => true
-          },
-          _ => true)
-  }
 
 }

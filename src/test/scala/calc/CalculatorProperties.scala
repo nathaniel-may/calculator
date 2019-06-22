@@ -5,7 +5,7 @@ import org.scalacheck.Prop.{forAll, forAllNoShrink}
 import org.scalacheck.Properties
 
 // Project
-import util.Generators._
+import calc.util.Generators._
 import calc.Exceptions._
 
 

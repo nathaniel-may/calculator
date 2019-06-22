@@ -1,21 +1,25 @@
-package util
+package calc.util
 
+// Scalacheck
 import org.scalacheck.Gen
 import Gen.nonEmptyListOf
 import org.scalacheck.Arbitrary.{arbDouble, arbLong}
 
+// Scala
 import scala.annotation.tailrec
-import calc.Calculator, Calculator.{Tok, TNum, TOp}
+
+// Project
+import calc.Language, Language.{Tok, TNum, TOp}
 
 object Generators {
 
   val doubleGen: Gen[Double] = arbDouble.arbitrary
   val longGen:   Gen[Long]   = arbLong.arbitrary
-  val opGen:     Gen[TOp]    = Gen.oneOf(Calculator.ops).map(TOp)
+  val opGen:     Gen[TOp]    = Gen.oneOf(Language.ops).map(TOp)
   val numberGen: Gen[TNum]   = arbDouble.arbitrary.map(d => TNum(BigDecimal(d)))
   val tokGen:    Gen[Tok]    = Gen.oneOf(opGen, numberGen)
   val numOpGen: Gen[Char]    = Gen.numChar.flatMap { num =>
-      Gen.oneOf(num :: Calculator.ops.map(_.toString.charAt(0))) }
+      Gen.oneOf(num :: Language.ops.map(_.toString.charAt(0))) }
 
   val seqGen: Gen[List[Tok]] = {
     // this impl always ends with the last elem of x regardless of how long y is

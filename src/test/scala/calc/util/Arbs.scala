@@ -1,9 +1,9 @@
-package util
+package calc.util
 
 import org.scalacheck.Arbitrary
 
-import calc.Calculator.{TOp, Tok}
-import util.Generators.{opGen, tokGen}
+import calc.Language.{TOp, Tok}
+import calc.util.Generators.{opGen, tokGen}
 
 object Arbs {
 

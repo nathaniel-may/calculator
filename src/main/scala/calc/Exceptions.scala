@@ -1,6 +1,6 @@
 package calc
 
-import calc.Calculator.{Op, ops}
+import calc.Language.{Op, ops}
 
 // Some exception messages require triple quotes and trimming because of https://github.com/scala/bug/issues/6476
 object Exceptions {
