@@ -38,12 +38,22 @@ private[calc] object Language {
 
   sealed trait Tok
 
-  case class TNum(value: BigDecimal) extends Tok
-  object TNum {
-    val regex: Regex = raw"\d+\.?\d*".r
+  case class TNum(value: BigDecimal) extends Tok {
+    override def toString: String = {
+      val raw = value.toString
+      if (raw.startsWith("-")) s"~${raw.drop(1)}"
+      else raw
+    }
   }
 
-  case class TOp(value: Op) extends Tok
+  object TNum {
+    val regex: Regex = raw"~?\d+\.?\d*".r
+  }
+
+  case class TOp(value: Op) extends Tok {
+    override def toString: String = value.toString
+  }
+
   object TOp {
     val regex: Regex = raw"[+-\/*]".r
 

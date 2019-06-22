@@ -21,7 +21,7 @@ object CalculatorProperties extends Properties("calculator") {
   }
 
   property("run throws a runtime exception when dividing by zero") = forAll {
-    num: TNum => Calculator.run(s"${num.value} / 0").fold({
+    num: TNum => Calculator.run(s"$num / 0").fold({
       case _: CalcRuntimeException => true
       case _                       => false },
       _ => false )

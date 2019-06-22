@@ -3,7 +3,7 @@ package calc.util
 // Scalacheck
 import org.scalacheck.Gen, Gen.posNum
 import Gen.nonEmptyListOf
-import org.scalacheck.Arbitrary.{arbDouble, arbLong, arbInt, arbBool}
+import org.scalacheck.Arbitrary.{arbInt, arbDouble, arbLong, arbBool}
 
 // Scala
 import scala.annotation.tailrec
@@ -13,19 +13,21 @@ import calc.Language, Language.{Tok, TNum, TOp}
 
 object Generators {
 
-  val whitespaceGen:    Gen[String] = Gen.oneOf(" \t\n".toList).map(_.toString)
-  val whitespaceStrGen: Gen[String] = Gen.listOf(whitespaceGen).map(_.mkString(""))
-  val doubleGen:        Gen[Double] = arbDouble.arbitrary
-  val longGen:          Gen[Long]   = arbLong.arbitrary
-  val opGen:            Gen[TOp]    = Gen.oneOf(Language.ops).map(TOp(_))
-  val numOpGen:         Gen[Char]   = Gen.numChar.flatMap { num =>
+  val whitespaceGen:    Gen[String]  = Gen.oneOf(" \t\n".toList).map(_.toString)
+  val whitespaceStrGen: Gen[String]  = Gen.listOf(whitespaceGen).map(_.mkString(""))
+  val intGen:           Gen[Int]     = arbInt.arbitrary
+  val doubleGen:        Gen[Double]  = arbDouble.arbitrary
+  val longGen:          Gen[Long]    = arbLong.arbitrary
+  val boolGen:          Gen[Boolean] = arbBool.arbitrary
+  val opGen:            Gen[TOp]     = Gen.oneOf(Language.ops).map(TOp(_))
+  val numOpGen:         Gen[Char]    = Gen.numChar.flatMap { num =>
       Gen.oneOf(num :: Language.ops.map(_.toString.charAt(0))) }
 
   val numGen: Gen[TNum] = for {
-    int     <- posNum[Int] // for now to not confuse with minus
-    point   <- arbBool.arbitrary
+    int     <- intGen
+    point   <- boolGen
     decimal <- posNum[Int]
-  } yield TNum(BigDecimal(if(point) s"$int.$decimal" else s"$int"))
+  } yield TNum(BigDecimal(if (point) s"$int.$decimal" else s"$int"))
 
   val tokGen: Gen[Tok] = Gen.oneOf(opGen, numGen)
 
@@ -59,8 +61,8 @@ object Generators {
   val inputGen: Gen[String] = for {
     seq <- seqGen
   } yield seq.map {
-    case TNum(num)   => num.toString
-    case TOp(op) => op.toString
+    case num: TNum => num.toString
+    case op:  TOp  => op.toString
   } mkString " "
 
 }

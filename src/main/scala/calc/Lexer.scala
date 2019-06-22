@@ -7,6 +7,10 @@ import scala.util.{Failure, Success, Try}
 
 private[calc] object Lexer {
 
+  def handleTilde(str: String): String =
+    if(str.startsWith("~")) s"-${str.drop(1)}"
+    else str
+
   def run(input: String): Try[List[Tok]] = {
     def go(in: String, toks: List[Tok]): Try[List[Tok]] = {
       if (in.isEmpty && toks.isEmpty)
@@ -16,7 +20,7 @@ private[calc] object Lexer {
       else {
         val prefix: Either[(Tok, String), _] = for {
           _ <- TNum.regex.findPrefixMatchOf(in)
-                 .map { numStr => (TNum(BigDecimal(numStr.toString)), numStr.toString) }
+                 .map { numStr => (TNum(BigDecimal(handleTilde(numStr.toString))), numStr.toString) }
                  .toLeft(())
           _ <- TOp.regex.findPrefixMatchOf(in)
                  .flatMap { opStr => TOp.fromString(opStr.toString).map((_, opStr.toString)) }
