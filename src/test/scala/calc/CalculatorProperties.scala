@@ -23,14 +23,14 @@ object CalculatorProperties extends Properties("calculator") {
   val longGen   = arbLong.arbitrary
 
   property("lexer fails on bad inputs") = forAll {
-    s: String => Calculator.lex(s)
+    s: String => Lexer.run(s)
       .fold(_ => true, _ => false)
   }
 
   property("lexer allows all doubles and operators in any order") =
     forAll(nonEmptyListOf(implicitly[Arbitrary[Tok]].arbitrary)) {
       elems: List[Tok] =>
-        Calculator.lex(elems.map {
+        Lexer.run(elems.map {
           case TOp(op) => op.toString
           case TNum(num) => num.toString
         }

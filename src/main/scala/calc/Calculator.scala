@@ -44,22 +44,10 @@ object Calculator {
   case class TOp(value: Op)          extends Tok
 
   def run(input: String): Try[BigDecimal] = for {
-    elems  <- lex(input)
+    elems  <- Lexer.run(input)
     valid  <- parse(elems)
     result <- eval(valid)
   } yield result
-
-  private[calc] def lex(input: String): Try[List[Tok]] =
-    input.split(' ').toList.map {
-      case ""  => Failure(new EmptyInputErr)
-      case "+" => Success(TOp(Add))
-      case "-" => Success(TOp(Sub))
-      case "*" => Success(TOp(Mult))
-      case "/" => Success(TOp(Div))
-      case num => Try(num.toDouble)
-        .fold(_ => Failure(InvalidElementErr.from(num)), double => Success(TNum(double)))
-    }
-      .sequence
 
   // uses shunting-yard algorithm to build a parse tree. Could build BNF instead, but this is more generic.
   // https://en.wikipedia.org/wiki/Shunting-yard_algorithm
