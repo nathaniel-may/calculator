@@ -6,22 +6,24 @@ import org.scalacheck.{Arbitrary, Gen, Properties}, Gen.nonEmptyListOf
 
 // Project
 import calc.util.Arbs._
+import calc.util.Generators._
 import calc.Language.{Tok, TNum, TOp}
 
+// TODO test for whitespace independence
 class LexerProperties extends Properties("Lexer") {
 
-  property("lexer fails on bad inputs") = forAll {
+  property("fails on bad inputs") = forAll {
     s: String => Lexer.run(s)
       .fold(_ => true, _ => false)
   }
 
-  property("lexer allows all doubles and operators in any order") =
-    forAll(nonEmptyListOf(implicitly[Arbitrary[Tok]].arbitrary)) {
-      elems: List[Tok] =>
+  property("allows all numbers and operators in any order with any whitespace") =
+    forAll(nonEmptyListOf(implicitly[Arbitrary[Tok]].arbitrary), whitespaceStrGen) {
+      (elems: List[Tok], whitespace: String) =>
         Lexer.run(elems.map {
-          case TOp(op)   => op.toString
-          case TNum(num) => num.toString
-        } mkString " " )
+          case TOp(op)   => whitespace + op.toString
+          case TNum(num) => num.toString + " " // "1.21.2" isn't valid input, but "1.2 1.2" is
+        } mkString "")
           .fold(_ => false, _ => true)
     }
 

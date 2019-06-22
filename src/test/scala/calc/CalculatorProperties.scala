@@ -5,8 +5,10 @@ import org.scalacheck.Prop.{forAll, forAllNoShrink}
 import org.scalacheck.Properties
 
 // Project
+import calc.util.Arbs._
 import calc.util.Generators._
 import calc.Exceptions._
+import calc.Language.TNum
 
 
 object CalculatorProperties extends Properties("calculator") {
@@ -19,7 +21,7 @@ object CalculatorProperties extends Properties("calculator") {
   }
 
   property("run throws a runtime exception when dividing by zero") = forAll {
-    d: Double => Calculator.run(s"$d / 0").fold({
+    num: TNum => Calculator.run(s"${num.value} / 0").fold({
       case _: CalcRuntimeException => true
       case _                       => false },
       _ => false )

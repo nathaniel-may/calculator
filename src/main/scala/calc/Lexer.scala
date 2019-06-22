@@ -1,22 +1,37 @@
 package calc
 
-import cats.implicits._
-import cats.implicits.catsStdInstancesForTry
-import calc.Language.{Add, Div, Mult, Sub, TNum, TOp, Tok}
+import calc.Language.{TNum, TOp, Tok}
 import calc.Exceptions.{EmptyInputErr, InvalidElementErr}
 
 import scala.util.{Failure, Success, Try}
 
 private[calc] object Lexer {
 
-  def run(input: String): Try[List[Tok]] =
-    input.split(' ').toList.map {
-      case "" => Failure(new EmptyInputErr)
-      case "+" => Success(TOp(Add))
-      case "-" => Success(TOp(Sub))
-      case "*" => Success(TOp(Mult))
-      case "/" => Success(TOp(Div))
-      case num => Try(num.toDouble)
-        .fold(_ => Failure(InvalidElementErr.from(num)), double => Success(TNum(double)))
-    } sequence
+  def run(input: String): Try[List[Tok]] = {
+    def go(in: String, toks: List[Tok]): Try[List[Tok]] = {
+      if (in.isEmpty && toks.isEmpty)
+        Failure(new EmptyInputErr)
+      else if (in.isEmpty)
+        Success(toks.reverse)
+      else {
+        val prefix: Either[(Tok, String), _] = for {
+          _ <- TNum.regex.findPrefixMatchOf(in)
+                 .map { numStr => (TNum(BigDecimal(numStr.toString)), numStr.toString) }
+                 .toLeft(())
+          _ <- TOp.regex.findPrefixMatchOf(in)
+                 .flatMap { opStr => TOp.fromString(opStr.toString).map((_, opStr.toString)) }
+                 .toLeft(())
+        } yield ()
+
+        prefix.fold(
+          { case (tok, str) => go(in.stripPrefix(str).trim, tok :: toks) },
+          _ => Failure(InvalidElementErr.from(in.take(1)))
+        )
+      }
+
+    }
+
+    go(input.trim, List.empty)
+  }
+
 }

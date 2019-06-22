@@ -55,7 +55,7 @@ lazy val calculator = (project in file("."))
     libraryDependencies += "org.scalatest"            %% "scalatest"          % "3.0.5"  % "test",
     libraryDependencies += "org.scalacheck"           %% "scalacheck"         % "1.14.0" % "test",
 
-    testOptions in Test += Tests.Argument("-oDS"),
+    testOptions in Test += Tests.Argument("-oD"),
 
     assemblyMergeStrategy in assembly := {
       case PathList("META-INF", _ @ _*) => MergeStrategy.discard

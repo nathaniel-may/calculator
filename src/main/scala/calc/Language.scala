@@ -1,6 +1,7 @@
 package calc
 
 import scala.math.BigDecimal
+import scala.util.matching.Regex
 
 private[calc] object Language {
 
@@ -36,7 +37,23 @@ private[calc] object Language {
   val ops = List(Add, Sub, Mult, Div)
 
   sealed trait Tok
+
   case class TNum(value: BigDecimal) extends Tok
-  case class TOp(value: Op)          extends Tok
+  object TNum {
+    val regex: Regex = raw"\d+\.?\d*".r
+  }
+
+  case class TOp(value: Op) extends Tok
+  object TOp {
+    val regex: Regex = raw"[+-\/*]".r
+
+    def fromString(str: String): Option[TOp] = str.toList match {
+      case '+' :: Nil => Some(TOp(Add))
+      case '-' :: Nil => Some(TOp(Sub))
+      case '*' :: Nil => Some(TOp(Mult))
+      case '/' :: Nil => Some(TOp(Div))
+      case _          => None
+    }
+  }
 
 }

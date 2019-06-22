@@ -2,12 +2,13 @@ package calc.util
 
 import org.scalacheck.Arbitrary
 
-import calc.Language.{TOp, Tok}
-import calc.util.Generators.{opGen, tokGen}
+import calc.Language.{Tok, TNum, TOp}
+import calc.util.Generators.{tokGen, numGen, opGen}
 
 object Arbs {
 
-  implicit val arbOp:  Arbitrary[TOp] = Arbitrary(opGen)
-  implicit val arbTok: Arbitrary[Tok] = Arbitrary(tokGen)
+  implicit val arbNum:  Arbitrary[TOp]  = Arbitrary(opGen)
+  implicit val arbOp:   Arbitrary[TNum] = Arbitrary(numGen)
+  implicit val arbTok:  Arbitrary[Tok]  = Arbitrary(tokGen)
 
 }

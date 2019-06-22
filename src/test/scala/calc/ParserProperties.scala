@@ -12,7 +12,7 @@ import shuffle.FunctionalShuffle.{Rand, shuffle}
 // Project
 import calc.Language.{Tok, TNum, TOp}
 import calc.Exceptions.CalcCompilationException
-import calc.util.Generators.{longGen, numberGen, opGen, seqGen}
+import calc.util.Generators.{longGen, numGen, opGen, seqGen}
 
 class ParserProperties extends Properties("Parser") {
 
@@ -31,7 +31,7 @@ class ParserProperties extends Properties("Parser") {
     }
 
   property("parser does not allow inputs with two numbers in a row") =
-    forAllNoShrink(seqGen, numberGen, longGen) {
+    forAllNoShrink(seqGen, numGen, longGen) {
       (seq: List[Tok], num: TNum, seed: Long) => (for {
         badSeq <- shuffle(num :: seq toStream)
       } yield Parser.run(badSeq.toList)

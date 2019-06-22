@@ -4,6 +4,7 @@ import org.scalatest._
 import calc.Exceptions._
 
 class CalculatorUnitTest extends FlatSpec with Matchers {
+  val maxDouble: String = "179769313486231570000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
 
   "A Calculator" should "evaluate to the correct answer when order of operations doesn't matter" in {
     Calculator.run("1 + 2 + 3 - 6") fold(fail(_), _ shouldBe 0)
@@ -20,8 +21,7 @@ class CalculatorUnitTest extends FlatSpec with Matchers {
   }
 
   it should "handle numbers beyond the scale of Double" in {
-    Calculator.run(s"${Double.MaxValue} + ${Double.MaxValue}") fold(fail(_), _ > Double.MaxValue shouldBe true)
-    Calculator.run(s"${Double.MinValue} / 2")                  fold(fail(_), _ < Double.MaxValue shouldBe true)
+    Calculator.run(s"$maxDouble * 2") fold(fail(_), _ > Double.MaxValue shouldBe true)
   }
 
   it should "throw the errors listed in the readme example" in {
