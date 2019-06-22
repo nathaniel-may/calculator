@@ -2,7 +2,7 @@ package calc
 
 // Scalacheck
 import org.scalacheck.Prop.{forAll, forAllNoShrink}
-import org.scalacheck.{Arbitrary, Gen, Properties}, Gen.nonEmptyListOf
+import org.scalacheck.Properties
 
 // Scala
 import scalaz.Monad
@@ -11,7 +11,6 @@ import shuffle.FunctionalShuffle.{shuffle, Rand}
 
 // Project
 import util.Generators._
-import util.Arbs._
 import calc.Calculator.{Tok, TNum, TOp}
 import calc.Exceptions._
 
