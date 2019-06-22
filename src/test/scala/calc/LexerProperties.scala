@@ -3,17 +3,12 @@ package calc
 // Scalacheck
 import org.scalacheck.Prop.forAll
 import org.scalacheck.{Arbitrary, Gen, Properties}, Gen.nonEmptyListOf
-import org.scalacheck.Arbitrary.{arbDouble, arbLong}
 
 // Project
-import util.Generators._
+import util.Arbs._
 import calc.Calculator.{Tok, TNum, TOp}
 
 class LexerProperties extends Properties("Lexer") {
-  implicit val arbOp:  Arbitrary[TOp] = Arbitrary(opGen)
-  implicit val arbTok: Arbitrary[Tok] = Arbitrary(tokGen)
-  val doubleGen = arbDouble.arbitrary
-  val longGen   = arbLong.arbitrary
 
   property("lexer fails on bad inputs") = forAll {
     s: String => Lexer.run(s)

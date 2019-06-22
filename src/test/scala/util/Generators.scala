@@ -2,17 +2,19 @@ package util
 
 import org.scalacheck.Gen
 import Gen.nonEmptyListOf
-import org.scalacheck.Arbitrary.arbDouble
+import org.scalacheck.Arbitrary.{arbDouble, arbLong}
 
 import scala.annotation.tailrec
 import calc.Calculator, Calculator.{Tok, TNum, TOp}
 
 object Generators {
 
-  val opGen:     Gen[TOp]  = Gen.oneOf(Calculator.ops).map(TOp)
-  val numberGen: Gen[TNum] = arbDouble.arbitrary.map(d => TNum(BigDecimal(d)))
-  val tokGen:    Gen[Tok]  = Gen.oneOf(opGen, numberGen)
-  val numOpGen: Gen[Char]  = Gen.numChar.flatMap { num =>
+  val doubleGen: Gen[Double] = arbDouble.arbitrary
+  val longGen:   Gen[Long]   = arbLong.arbitrary
+  val opGen:     Gen[TOp]    = Gen.oneOf(Calculator.ops).map(TOp)
+  val numberGen: Gen[TNum]   = arbDouble.arbitrary.map(d => TNum(BigDecimal(d)))
+  val tokGen:    Gen[Tok]    = Gen.oneOf(opGen, numberGen)
+  val numOpGen: Gen[Char]    = Gen.numChar.flatMap { num =>
       Gen.oneOf(num :: Calculator.ops.map(_.toString.charAt(0))) }
 
   val seqGen: Gen[List[Tok]] = {

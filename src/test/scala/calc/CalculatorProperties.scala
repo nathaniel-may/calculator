@@ -12,15 +12,12 @@ import shuffle.FunctionalShuffle.{shuffle, Rand}
 
 // Project
 import util.Generators._
+import util.Arbs._
 import calc.Calculator.{Tok, TNum, TOp}
 import calc.Exceptions._
 
 
 object CalculatorProperties extends Properties("calculator") {
-  implicit val arbOp:  Arbitrary[TOp] = Arbitrary(opGen)
-  implicit val arbTok: Arbitrary[Tok] = Arbitrary(tokGen)
-  val doubleGen = arbDouble.arbitrary
-  val longGen   = arbLong.arbitrary
 
   property("lexer fails on bad inputs") = forAll {
     s: String => Lexer.run(s)
