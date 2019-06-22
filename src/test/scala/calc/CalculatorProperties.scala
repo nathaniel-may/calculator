@@ -18,22 +18,6 @@ import calc.Exceptions._
 
 object CalculatorProperties extends Properties("calculator") {
 
-  property("lexer fails on bad inputs") = forAll {
-    s: String => Lexer.run(s)
-      .fold(_ => true, _ => false)
-  }
-
-  property("lexer allows all doubles and operators in any order") =
-    forAll(nonEmptyListOf(implicitly[Arbitrary[Tok]].arbitrary)) {
-      elems: List[Tok] =>
-        Lexer.run(elems.map {
-          case TOp(op) => op.toString
-          case TNum(num) => num.toString
-        }
-          .mkString(" "))
-          .fold(_ => false, _ => true)
-    }
-
   property("parser allows all inputs in the form { num (op num)* }") =
     forAllNoShrink(seqGen) {
       seq: List[Tok] =>
