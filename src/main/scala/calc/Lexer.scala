@@ -1,6 +1,5 @@
 package calc
 
-//import cats.implicits._ //catsStdInstancesForTry
 import cats.implicits._
 import cats.implicits.catsStdInstancesForTry
 import calc.Calculator.{Add, Div, Mult, Sub, TNum, TOp, Tok}
