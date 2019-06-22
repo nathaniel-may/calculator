@@ -11,7 +11,7 @@ import calc.util.Generators.seqGen
 
 object EvaluatorProperties extends Properties("Evaluator"){
 
-  property("evaluator runs without compilation errors") = forAllNoShrink(seqGen) {
+  property("runs without compilation errors") = forAllNoShrink(seqGen) {
     seq: List[Tok] =>
       Parser.run(seq)
         .flatMap(Evaluator.run)

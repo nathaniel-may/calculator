@@ -11,26 +11,25 @@ import shuffle.FunctionalShuffle.{Rand, shuffle}
 
 // Project
 import calc.Language.{Tok, TNum, TOp}
-import calc.Exceptions.CalcCompilationException
 import calc.util.Generators.{longGen, numGen, opGen, seqGen}
 
 class ParserProperties extends Properties("Parser") {
 
-  property("parser allows all inputs in the form { num (op num)* }") =
+  property("allows all inputs in the form { num (op num)* }") =
     forAllNoShrink(seqGen) {
       seq: List[Tok] =>
         Parser.run(seq)
           .fold(_ => false, _ => true)
     }
 
-  property("parser does not allow inputs that start with an operator or empty inputs") =
+  property("does not allow inputs that start with an operator or empty inputs") =
     forAllNoShrink(seqGen) {
       seq: List[Tok] =>
         Parser.run(seq.tail)
           .fold(_ => true, _ => false)
     }
 
-  property("parser does not allow inputs with two numbers in a row") =
+  property("does not allow inputs with two numbers in a row") =
     forAllNoShrink(seqGen, numGen, longGen) {
       (seq: List[Tok], num: TNum, seed: Long) => (for {
         badSeq <- shuffle(num :: seq toStream)
@@ -39,7 +38,7 @@ class ParserProperties extends Properties("Parser") {
         .eval(new Random(seed))
     }
 
-  property("parser does not allow inputs with two operators in a row") =
+  property("does not allow inputs with two operators in a row") =
     forAllNoShrink(seqGen, opGen, longGen) {
       (seq: List[Tok], op: TOp, seed: Long) => (seq match {
         case n :: Nil       => Monad[Rand].point(n :: op :: op :: n :: Nil toStream)
