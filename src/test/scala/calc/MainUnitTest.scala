@@ -9,20 +9,6 @@ class MainUnitTest extends FlatSpec with Matchers {
     noException should be thrownBy Main.run(List("1 + 2 + 3 - 6")).unsafeRunSync()
   }
 
-  it should "fail with no args" in {
-    assertThrows[Exception] {
-      Main.go(List())
-        .unsafeRunSync()
-    }
-  }
-
-  it should "fail with too many args" in {
-    assertThrows[Exception] {
-      Main.go(List("", ""))
-        .unsafeRunSync()
-    }
-  }
-
   it should "not throw loudly to the user" in {
     noException should be thrownBy Calculator.run("1 + + 2")
     noException should be thrownBy Calculator.run("+")
