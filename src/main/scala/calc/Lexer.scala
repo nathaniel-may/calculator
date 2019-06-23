@@ -22,14 +22,16 @@ private[calc] object Lexer {
     (TOp.regex,  s => TOp.from(s).toTry(InvalidElementErr.from(s take 1)))
   )
 
-  def lex[A](rl: RegexLexer[A]): StateT[Try, String, A] = rl match {
-    case (rx, build) =>
-      StateT { s => for {
-        matched <- rx.findPrefixMatchOf(s)
-                     .toTry(InvalidElementErr.from(s.take(1)))
-        built   <- build(matched.toString)
-      } yield (s.drop(matched.end).trim, built) }
-    }
+  def lex[A](rl: RegexLexer[A]): StateT[Try, String, A] = {
+    import StateT._
+    val (rx, build) =  rl
+    for {
+      matched <- inspectF((s: String) => rx.findPrefixMatchOf(s)
+                   .toTry(InvalidElementErr.from(s.take(1))))
+      _       <- modify[Try, String](_.drop(matched.end).trim)
+      built   <- liftF(build(matched.toString))
+    } yield built
+  }
 
   def run(input: String): Try[List[Tok]] =
     tokens.reduceMapK(lex)
