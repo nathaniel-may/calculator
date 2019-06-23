@@ -2,8 +2,9 @@ package calc
 
 import scala.math.BigDecimal
 import scala.util.matching.Regex
+import scala.util.Try
 
-private[calc] object Language {
+object Language {
 
   object Priority extends Enumeration {
     type Priority = Value
@@ -47,7 +48,13 @@ private[calc] object Language {
   }
 
   object TNum {
-    val regex: Regex = raw"~?\d+\.?\d*".r
+    val regex: Regex = raw"~?\d+\.?\d*".r // TODO: Match .5
+
+    def from(str: String): Option[TNum] =
+      Try(TNum(BigDecimal(
+        if(str.startsWith("~")) s"-${str.drop(1)}"
+        else str
+      ))).toOption
   }
 
   case class TOp(value: Op) extends Tok {
@@ -55,14 +62,14 @@ private[calc] object Language {
   }
 
   object TOp {
-    val regex: Regex = raw"[+-\/*]".r
+    val regex: Regex = raw"[-+*/]".r
 
-    def fromString(str: String): Option[TOp] = str.toList match {
-      case '+' :: Nil => Some(TOp(Add))
-      case '-' :: Nil => Some(TOp(Sub))
-      case '*' :: Nil => Some(TOp(Mult))
-      case '/' :: Nil => Some(TOp(Div))
-      case _          => None
+    def from(str: String): Option[TOp] = str match {
+      case "+" => Some(TOp(Add))
+      case "-" => Some(TOp(Sub))
+      case "*" => Some(TOp(Mult))
+      case "/" => Some(TOp(Div))
+      case _   => None
     }
   }
 

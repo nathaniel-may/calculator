@@ -5,10 +5,7 @@ import scala.math.BigDecimal
 
 object Calculator {
 
-  def run(input: String): Try[BigDecimal] = for {
-    elems  <- Lexer.run(input)
-    valid  <- Parser.run(elems)
-    result <- Evaluator.run(valid)
-  } yield result
+  def run(input: String): Try[BigDecimal] =
+    Lexer.run(input) flatMap Parser.run flatMap Evaluator.run
 
 }

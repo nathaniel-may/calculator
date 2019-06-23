@@ -12,7 +12,7 @@ import calc.Language.{Tok, TNum, TOp}
 // TODO test for whitespace independence
 class LexerProperties extends Properties("Lexer") {
 
-  property("fails on bad inputs") = forAll {
+  property("fails on bad inputs") = forAll(nonEmptyStrGen) {
     s: String => Lexer.run(s)
       .fold(_ => true, _ => false)
   }

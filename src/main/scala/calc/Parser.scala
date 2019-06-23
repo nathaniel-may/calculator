@@ -1,7 +1,7 @@
 package calc
 
 import calc.Language.{TNum, TOp, Tok}
-import calc.Exceptions.{InvalidSequenceErr, MissingLeftInputErr, MissingRightInputErr, UnknownCompilationErr}
+import calc.Exceptions.{EmptyInputErr, InvalidSequenceErr, MissingLeftInputErr, MissingRightInputErr, UnknownCompilationErr}
 
 import scala.annotation.tailrec
 import scala.util.{Failure, Success, Try}
@@ -16,14 +16,17 @@ private[calc] object Parser {
       case (Nil, res ::  Nil, Nil) =>
         Success(res)
 
+      case (Nil, Nil, Nil) =>
+        Failure(new EmptyInputErr)
+
       case (TOp(op) :: Nil, Nil, Nil) =>
         Failure(MissingLeftInputErr.from(op))
 
       case (TNum(num0) :: TNum(num1) :: _, _, _) =>
-        Failure(InvalidSequenceErr.from(s"$num0$num1"))
+        Failure(InvalidSequenceErr.from(s"$num0 $num1"))
 
       case (TOp(op0) :: TOp(op1) :: _, _, _) =>
-        Failure(InvalidSequenceErr.from(s"$op0$op1"))
+        Failure(InvalidSequenceErr.from(s"$op0 $op1"))
 
       case (TOp(op) :: Nil, _, _) =>
         Failure(MissingRightInputErr.from(op))
@@ -37,7 +40,7 @@ private[calc] object Parser {
       case (TOp(op) :: tail, tree, Nil) =>
         go(tail, tree, TOp(op) :: Nil)
 
-      case (TOp(op) :: tail, tree, stack @ TOp(shunted) :: Nil)
+      case (TOp(op) :: tail, tree, stack @ TOp(shunted) :: _)
         if shunted.priority < op.priority =>
         go(tail, tree, TOp(op) :: stack)
 

@@ -3,7 +3,7 @@ package calc.util
 // Scalacheck
 import org.scalacheck.Gen, Gen.posNum
 import Gen.nonEmptyListOf
-import org.scalacheck.Arbitrary.{arbInt, arbDouble, arbLong, arbBool}
+import org.scalacheck.Arbitrary.{arbInt, arbDouble, arbLong, arbBool, arbChar}
 
 // Scala
 import scala.annotation.tailrec
@@ -22,6 +22,8 @@ object Generators {
   val opGen:            Gen[TOp]     = Gen.oneOf(Language.ops).map(TOp(_))
   val numOpGen:         Gen[Char]    = Gen.numChar.flatMap { num =>
       Gen.oneOf(num :: Language.ops.map(_.toString.charAt(0))) }
+
+  val nonEmptyStrGen: Gen[String] = Gen.nonEmptyListOf[Char](arbChar.arbitrary).map(_.mkString)
 
   val numGen: Gen[TNum] = for {
     int     <- intGen

@@ -1,5 +1,6 @@
 package calc
 
+import cats.Applicative
 import cats.effect.{ExitCode, IO, IOApp}
 import cats.syntax.all._
 import scopt.OptionParser
@@ -9,7 +10,9 @@ import calc.Exceptions.ArgumentParsingErr
 
 object Main extends IOApp {
 
-  private case class Config(input: String = "", repl: Boolean = false)
+  sealed private trait Config
+  private case class  EvalConfig(input: String) extends Config
+  private case object ReplConfig                extends Config
 
   private val parser: OptionParser[Config] =
     new OptionParser[Config]("calc") {
@@ -17,11 +20,11 @@ object Main extends IOApp {
 
       arg[String]("<compute string>")
         .optional
-        .action { (s, c) => c.copy(input = s) }
+        .action { (s, _) => EvalConfig(s) }
         .text("...four function string to compute")
 
       cmd("repl")
-        .action { (_, c) => c.copy(repl = true) }
+        .action { (_,_) => ReplConfig }
         .text("repl is a command.")
     }
 
@@ -31,8 +34,8 @@ object Main extends IOApp {
 
   private def printResult(res: Either[Throwable, BigDecimal]) =
     res match {
-      case Right(ans) => (printlnIO(ans), ExitCode.Error)
-      case Left(e)    => (printlnIO(e.getMessage), ExitCode.Success)
+      case Right(ans) => (printlnIO(ans), ExitCode.Success)
+      case Left(e)    => (printlnIO(e.getMessage), ExitCode.Error)
     }
 
   private def printlnIO(x: Any): IO[Unit] =
@@ -47,25 +50,24 @@ object Main extends IOApp {
   private def repl: IO[Unit] = {
     def go: IO[Unit] = for {
       _   <- printlnIO("")
-      _   <- printIO("calc > ")
+      _   <- printIO("calc> ")
       cmd <- readLineIO
-      _   <- if (cmd.trim == "exit") IO(())
-             else printResult(calculate(cmd))._1
-               .flatMap { _ => go }
+      _   <- Applicative[IO].unlessA(cmd.trim == "exit") {
+               printResult(calculate(cmd))._1 *> go
+             }
     } yield ()
 
-    printlnIO(":::: This is the calc repl - type `exit` to quit ::::")
-      .flatMap { _ => go }
+    printlnIO(":::: This is the calc repl - type `exit` to quit ::::") *> go
   }
 
   override def run(args: List[String]): IO[ExitCode] =
-    parser.parse(args, Config()) match {
-      case Some(Config(input, false)) =>
+    parser.parse(args, ReplConfig) match {
+      case Some(EvalConfig(input)) =>
         val (io, exitCode) = printResult(calculate(input))
         io.as(exitCode)
 
-      case Some(Config(_, true)) =>
-        repl.map { _ => ExitCode.Success }
+      case Some(ReplConfig) =>
+        repl.as(ExitCode.Success)
 
       case None =>
         IO.raiseError(new ArgumentParsingErr)

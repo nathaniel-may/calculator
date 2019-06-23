@@ -1,41 +1,44 @@
 package calc
 
-import calc.Language.{TNum, TOp, Tok}
-import calc.Exceptions.{EmptyInputErr, InvalidElementErr}
+// Scala
+import cats.syntax.all._
+import cats.instances.all._
+import cats.data.{NonEmptyList, StateT}
+import scala.util.matching.Regex
+import scala.util.Try
 
-import scala.util.{Failure, Success, Try}
+// Project
+import calc.Language.{TNum, TOp, Tok}
+import calc.Exceptions.InvalidElementErr
+import calc.Implicits._
+import calc.Instances._
 
 private[calc] object Lexer {
+  type RegexLexer[A] = (Regex, String => Try[A])
 
-  def handleTilde(str: String): String =
-    if(str.startsWith("~")) s"-${str.drop(1)}"
-    else str
-
-  def run(input: String): Try[List[Tok]] = {
-    def go(in: String, toks: List[Tok]): Try[List[Tok]] = {
-      if (in.isEmpty && toks.isEmpty)
-        Failure(new EmptyInputErr)
-      else if (in.isEmpty)
-        Success(toks.reverse)
-      else {
-        val prefix: Either[(Tok, String), _] = for {
-          _ <- TNum.regex.findPrefixMatchOf(in)
-                 .map { numStr => (TNum(BigDecimal(handleTilde(numStr.toString))), numStr.toString) }
-                 .toLeft(())
-          _ <- TOp.regex.findPrefixMatchOf(in)
-                 .flatMap { opStr => TOp.fromString(opStr.toString).map((_, opStr.toString)) }
-                 .toLeft(())
-        } yield ()
-
-        prefix.fold(
-          { case (tok, str) => go(in.stripPrefix(str).trim, tok :: toks) },
-          _ => Failure(InvalidElementErr.from(in.take(1)))
-        )
-      }
-
+  def lex[A](rl: RegexLexer[A]): StateT[Try,String,A] = rl match {
+    case (rx, build) =>
+      StateT { s => for {
+        matched <- rx.findPrefixMatchOf(s)
+                     .toTry(InvalidElementErr.from(s.take(1)))
+        built   <- build(matched.toString)
+      } yield (s.drop(matched.end).trim, built) }
     }
 
-    go(input.trim, List.empty)
-  }
+  val tokens: NonEmptyList[RegexLexer[Tok]] = NonEmptyList.of(
+    (TNum.regex, s => TNum.from(s).toTry(InvalidElementErr.from(s take 1))),
+    (TOp.regex,  s => TOp.from(s).toTry(InvalidElementErr.from(s take 1)))
+  )
 
+  def run(input: String): Try[List[Tok]] = {
+    def go: StateT[Try, String, List[Tok]] =
+      StateT.inspect[Try, String, Boolean](_.isEmpty) flatMap {
+        case true  => StateT.pure(List.empty)
+        case false => for {
+          tok  <- tokens.reduceMapK(lex)
+          toks <- go
+        } yield tok :: toks
+      }
+    go.runA(input.trim)
+  }
 }
