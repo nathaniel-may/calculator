@@ -5,7 +5,6 @@ import cats.effect.{ExitCode, IO, IOApp}
 import cats.syntax.all._
 import scopt.OptionParser
 import scala.io.StdIn
-import calc.Exceptions.ArgumentParsingErr
 
 
 object Main extends IOApp {
@@ -70,6 +69,6 @@ object Main extends IOApp {
         repl.as(ExitCode.Success)
 
       case None =>
-        IO.raiseError(new ArgumentParsingErr)
+        IO(ExitCode.Error)
     }
 }

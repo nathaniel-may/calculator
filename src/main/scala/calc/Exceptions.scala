@@ -50,10 +50,4 @@ object Exceptions {
     }
   }
 
-  class ArgumentParsingErr(message: String) extends Exception(message) {
-    def this() {
-      this("error parsing arguments")
-    }
-  }
-
 }
