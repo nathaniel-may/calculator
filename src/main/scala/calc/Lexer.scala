@@ -4,7 +4,6 @@ package calc
 import cats.syntax.all._
 import cats.instances.all._
 import cats.data.{NonEmptyList, StateT}
-
 import scala.util.matching.Regex
 import scala.util.Try
 
