@@ -38,7 +38,7 @@ lazy val calculator = (project in file("."))
       "-Ywarn-nullary-unit",               // Warn when nullary methods return Unit.
       "-Ywarn-numeric-widen",              // Warn when numerics are widened.
       "-Ywarn-unused:implicits",           // Warn if an implicit parameter is unused.
-      // fails with necessary cats implicits // "-Ywarn-unused:imports",             // Warn if an import selector is not referenced.
+      "-Ywarn-unused:imports",             // Warn if an import selector is not referenced.
       "-Ywarn-unused:locals",              // Warn if a local definition is unused.
       "-Ywarn-unused:params",              // Warn if a value parameter is unused.
       "-Ywarn-unused:patvars",             // Warn if a variable bound in a pattern is unused.
@@ -56,6 +56,8 @@ lazy val calculator = (project in file("."))
     libraryDependencies += "org.scalacheck"           %% "scalacheck"         % "1.14.0" % "test",
 
     testOptions in Test += Tests.Argument("-oD"),
+    scalacOptions in (Compile, console) ~= (_ filterNot (_ == "-Xfatal-warnings") filterNot (_ == "-Ywarn-unused:imports")),
+    scalacOptions in (Test, console) := (scalacOptions in (Compile, console)).value,
 
     assemblyMergeStrategy in assembly := {
       case PathList("META-INF", _ @ _*) => MergeStrategy.discard
