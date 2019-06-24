@@ -33,10 +33,13 @@ class CalculatorUnitTest extends FlatSpec with Matchers {
     Calculator.run(s"$maxDouble * 2") fold(fail(_), _ > Double.MaxValue shouldBe true)
   }
 
-  it should "throw the errors listed in the readme example" in {
+  it should "throw expected exceptions" in {
     Calculator.run("1 + + 2")     fold(_ shouldBe a[InvalidSequenceErr],   _ => fail())
     Calculator.run("+")           fold(_ shouldBe a[MissingLeftInputErr],  _ => fail())
     Calculator.run("5 +")         fold(_ shouldBe a[MissingRightInputErr], _ => fail())
     Calculator.run("hello world") fold(_ shouldBe a[InvalidElementErr],    _ => fail())
+    Calculator.run("()")          fold(_ shouldBe a[NothingToComputeErr],  _ => fail())
+    Calculator.run("(1+2")        fold(_ shouldBe a[MismatchedParensErr],  _ => fail())
+    Calculator.run("1+2)+3")      fold(_ shouldBe a[MismatchedParensErr],  _ => fail())
   }
 }

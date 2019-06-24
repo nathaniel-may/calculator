@@ -14,9 +14,9 @@ object Exceptions {
     }
   }
 
-  class EmptyInputErr(message: String) extends CalcCompilationException(message, None) {
+  class NothingToComputeErr(message: String) extends CalcCompilationException(message, None) {
     def this() {
-      this("cannot run computation on empty input")
+      this("nothing to compute")
     }
   }
 
@@ -42,6 +42,12 @@ object Exceptions {
   object InvalidSequenceErr {
     def from(seq: String): InvalidSequenceErr =
       new InvalidSequenceErr(s""" "$seq" is not a valid sequence""".trim)
+  }
+
+  class MismatchedParensErr(message: String) extends CalcCompilationException(message, None) {
+    def this() {
+      this("mismatched parens")
+    }
   }
 
 }

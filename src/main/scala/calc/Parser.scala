@@ -2,7 +2,7 @@ package calc
 
 import calc.Lexer.{TNum, TOp, Tok, TParen}
 import calc.Parse.{ParseTree, POp, PNum, LParen, RParen}
-import calc.Exceptions.{EmptyInputErr, InvalidSequenceErr, MissingLeftInputErr, MissingRightInputErr}
+import calc.Exceptions.{NothingToComputeErr, InvalidSequenceErr, MissingLeftInputErr, MissingRightInputErr, MismatchedParensErr}
 
 import scala.util.{Failure, Success, Try}
 
@@ -18,7 +18,7 @@ private[calc] object Parser {
         Success(res)
 
       case (Nil, Nil, Nil) =>
-        Failure(new EmptyInputErr)
+        Failure(new NothingToComputeErr)
 
       case (TOp(op) :: Nil, Nil, Nil) =>
         Failure(MissingLeftInputErr.from(op))
@@ -53,28 +53,24 @@ private[calc] object Parser {
         go(tail, tree, p :: stack)
 
       case (TParen(RParen) :: tail, tree, stack) =>
-        def gogo(t: List[ParseTree], s: List[Tok]): (List[ParseTree], List[Tok]) =
+        def gogo(t: List[ParseTree], s: List[Tok]): Try[(List[ParseTree], List[Tok])] =
           (t, s) match {
             case (newT, TParen(LParen) :: sTail) =>
-              (newT, sTail)
+              Success((newT, sTail))
 
             case (a :: b :: tTail, TOp(op) :: sTail) =>
               gogo(POp(op, b, a) :: tTail, sTail)
 
-            case _ => (t, s) // TODO fix this
+            case _ =>
+              Failure(new MismatchedParensErr)
           }
-        val (newTree, newStack) = gogo(tree, stack)
-        go(tail, newTree, newStack)
+        gogo(tree, stack) flatMap { case (newTree, newStack) => go(tail, newTree, newStack)}
+
+      case (_, _, TParen(_) :: _) =>
+        Failure(new MismatchedParensErr)
 
       case (_, _ :: Nil, TOp(op) :: Nil) =>
         Failure(MissingRightInputErr.from(op))
-
-        // (List(), -, 7),   List(PNum(3), PNum(2), PNum(1)),   List(*, (, +))
-
-//        (List(),  List(POp(-,PNum(3),PNum(7)), PNum(2), PNum(1)),   List())
-
-// 1 + (2 * 3) - 7
-//        (List(*, 3, ), -, 7),   List(PNum(2), PNum(1)),   List((, +))
     }
 
     go(input, List.empty, List.empty)
