@@ -10,7 +10,7 @@ import scala.util.matching.Regex
 import scala.util.Try
 
 // Project
-import calc.Parse.{Add, Div, Mult, Op, Sub}
+import calc.Parse.{Add, Div, Mult, Op, Sub, Paren, LParen, RParen}
 import calc.Exceptions.InvalidElementErr
 import calc.Implicits._
 import calc.Instances._
@@ -18,6 +18,18 @@ import calc.Instances._
 private[calc] object Lexer {
 
   sealed trait Tok
+
+  case class TParen(value: Paren) extends Tok
+  object TParen{
+    val regex: Regex = "[)(]".r
+
+    def from(s: String): Option[TParen] = s match {
+      case "(" => Some(TParen(LParen))
+      case ")" => Some(TParen(RParen))
+      case _ => None
+    }
+  }
+
 
   case class TNum(value: BigDecimal) extends Tok {
     override def toString: String = {
@@ -56,8 +68,9 @@ private[calc] object Lexer {
   type RegexLexer[A] = (Regex, String => Try[A])
 
   val tokens: NonEmptyList[RegexLexer[Tok]] = NonEmptyList.of(
-    (TNum.regex, s => TNum.from(s) toTry InvalidElementErr.from(s take 1)),
-    (TOp.regex,  s => TOp.from(s) toTry InvalidElementErr.from(s take 1))
+    (TParen.regex, s => TParen.from(s) toTry InvalidElementErr.from(s take 1)),
+    (TNum.regex,   s => TNum.from(s)   toTry InvalidElementErr.from(s take 1)),
+    (TOp.regex,    s => TOp.from(s)    toTry InvalidElementErr.from(s take 1))
   )
 
   def lex[A](rl: RegexLexer[A]): StateT[Try, String, A] = {

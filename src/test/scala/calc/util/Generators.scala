@@ -10,7 +10,7 @@ import org.scalacheck.Arbitrary.{arbBool, arbChar, arbDouble, arbInt, arbLong, a
 import scala.annotation.tailrec
 
 // Project
-import calc.Lexer.{Tok, TNum, TOp}
+import calc.Lexer.{Tok, TNum, TOp, TParen}
 import calc.Parse.ops
 
 object Generators {
@@ -75,8 +75,9 @@ object Generators {
   val inputGen: Gen[String] = for {
     seq <- seqGen
   } yield seq.map {
-    case num: TNum => num.toString
-    case op:  TOp  => op.toString
+    case num: TNum   => num.toString
+    case op:  TOp    => op.toString
+    case op:  TParen => op.toString
   } mkString " "
 
 }

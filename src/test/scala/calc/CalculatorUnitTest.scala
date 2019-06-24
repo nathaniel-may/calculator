@@ -20,6 +20,15 @@ class CalculatorUnitTest extends FlatSpec with Matchers {
     Calculator.run("2 * 3 - 1 * 3") fold(fail(_), _ shouldBe 3)
   }
 
+  it should "evaluate to the correct answer with parentheses" in {
+    Calculator.run("1 + (2 * 3) - 7") fold(fail(_), _ shouldBe 0)
+    Calculator.run("(1 - 3) + 6 / 2") fold(fail(_), _ shouldBe 1)
+    Calculator.run("4 / (8 - 3 * 2)") fold(fail(_), _ shouldBe 2)
+    Calculator.run("2 * (3 - 1) - 1") fold(fail(_), _ shouldBe 3)
+    Calculator.run("(2*(2+3)-2) / 4") fold(fail(_), _ shouldBe 4)
+    Calculator.run("(7 + 3)/(6 - 4)") fold(fail(_), _ shouldBe 5)
+  }
+
   it should "handle numbers beyond the scale of Double" in {
     Calculator.run(s"$maxDouble * 2") fold(fail(_), _ > Double.MaxValue shouldBe true)
   }

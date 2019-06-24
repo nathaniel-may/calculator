@@ -7,7 +7,7 @@ import org.scalacheck.{Arbitrary, Gen, Properties}, Gen.nonEmptyListOf
 // Project
 import calc.util.Arbs._
 import calc.util.Generators._
-import calc.Lexer.{Tok, TNum, TOp}
+import calc.Lexer.{Tok, TNum, TOp, TParen}
 
 // TODO test for whitespace independence
 class LexerProperties extends Properties("Lexer") {
@@ -23,6 +23,7 @@ class LexerProperties extends Properties("Lexer") {
         Lexer.run(elems.map {
           case TOp(op)   => whitespace + op.toString
           case TNum(num) => num.toString + " " // "1.21.2" isn't valid input, but "1.2 1.2" is
+          case TParen(p) => p.toString
         } mkString "")
           .fold(_ => false, _ => true)
     }

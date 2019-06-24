@@ -5,7 +5,7 @@ import org.scalacheck.{Arbitrary, Properties}
 import calc.util.Generators._
 
 import scala.annotation.tailrec
-import calc.Lexer.{Tok, TNum, TOp}
+import calc.Lexer.{Tok, TNum, TOp, TParen}
 
 
 object GeneratorProperties extends Properties("generators") {
@@ -22,8 +22,9 @@ object GeneratorProperties extends Properties("generators") {
       }
 
       isAlternating(seq.map{
-        case TNum(num)   => Left(num)
-        case TOp(op) => Right(op)
+        case TNum(num)  => Left(num)
+        case TOp(op)    => Right(op)
+        case TParen(op) => Right(op) // TODO how.
       })
   }
 }

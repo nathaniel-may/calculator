@@ -44,10 +44,4 @@ object Exceptions {
       new InvalidSequenceErr(s""" "$seq" is not a valid sequence""".trim)
   }
 
-  class UnknownCompilationErr(message: String) extends CalcCompilationException(message, None) {
-    def this() {
-      this("unknown compilation error")
-    }
-  }
-
 }

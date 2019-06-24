@@ -2,7 +2,7 @@ package calc
 
 import calc.Lexer.{TNum, TOp, Tok}
 import calc.Parse.{ParseTree, POp, PNum}
-import calc.Exceptions.{EmptyInputErr, InvalidSequenceErr, MissingLeftInputErr, MissingRightInputErr, UnknownCompilationErr}
+import calc.Exceptions.{EmptyInputErr, InvalidSequenceErr, MissingLeftInputErr, MissingRightInputErr}
 
 import scala.annotation.tailrec
 import scala.util.{Failure, Success, Try}
@@ -29,9 +29,6 @@ private[calc] object Parser {
       case (TOp(op0) :: TOp(op1) :: _, _, _) =>
         Failure(InvalidSequenceErr.from(s"$op0 $op1"))
 
-      case (TOp(op) :: Nil, _, _) =>
-        Failure(MissingRightInputErr.from(op))
-
       case (Nil, a :: b :: treeTail, TOp(op) :: shuntTail) =>
         go(Nil, POp(op, b, a) :: treeTail, shuntTail)
 
@@ -49,8 +46,8 @@ private[calc] object Parser {
         if shunted.priority >= op.priority =>
         go(toks, POp(shunted, b, a) :: treeTail, shuntTail)
 
-      case _ =>
-        Failure(new UnknownCompilationErr)
+      case (_, _ :: Nil, TOp(op) :: Nil) =>
+        Failure(MissingRightInputErr.from(op))
     }
 
     go(input, List.empty, List.empty)
