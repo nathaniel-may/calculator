@@ -17,16 +17,16 @@ private[calc] object Lexer {
   type RegexLexer[A] = (Regex, String => Try[A])
 
   val tokens: NonEmptyList[RegexLexer[Tok]] = NonEmptyList.of(
-    (TNum.regex, s => TNum.from(s).toTry(InvalidElementErr.from(s take 1))),
-    (TOp.regex,  s => TOp.from(s).toTry(InvalidElementErr.from(s take 1)))
+    (TNum.regex, s => TNum.from(s) toTry InvalidElementErr.from(s take 1)),
+    (TOp.regex,  s => TOp.from(s) toTry InvalidElementErr.from(s take 1))
   )
 
   def lex[A](rl: RegexLexer[A]): StateT[Try, String, A] = {
     import StateT._
-    val (rx, build) =  rl
+    val (rx, build) = rl
     for {
       matched <- inspectF((s: String) => rx.findPrefixMatchOf(s)
-                   .toTry(InvalidElementErr.from(s.take(1))))
+                   .toTry(InvalidElementErr.from(s take 1)))
       _       <- modify[Try, String](_.drop(matched.end).trim)
       built   <- liftF(build(matched.toString))
     } yield built
