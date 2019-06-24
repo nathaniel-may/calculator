@@ -5,10 +5,11 @@
 A basic four function calculator which respects the order of operations with a commandline interface. This project was a good introduction into building a simple programming language.
 
 ### Syntax
-- Input language is whitespace agnostic
+- whitespace agnostic
 - `-` is the subtraction operator
 - `~` denotes a negative number
-- numbers must be of the form `~?\d+\.?\d*`
+- numbers are unbounded and can be written like the following examples:
+  `1`, `~1`, `1.1`, `0.5`, `.5`, `~.5`
 - four supported operators: `+`, `-`, `*`, `/`
 
 ### Examples
