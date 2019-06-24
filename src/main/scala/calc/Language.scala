@@ -48,7 +48,7 @@ object Language {
   }
 
   object TNum {
-    val regex: Regex = raw"~?\d+\.?\d*".r // TODO: Match .5
+    val regex: Regex = raw"~?\d*\.?\d*".r
 
     def from(str: String): Option[TNum] =
       Try(TNum(BigDecimal(

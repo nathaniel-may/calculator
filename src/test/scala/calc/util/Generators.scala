@@ -1,9 +1,10 @@
 package calc.util
 
 // Scalacheck
-import org.scalacheck.Gen, Gen.posNum
+import org.scalacheck.{Arbitrary, Gen}
+import Gen.posNum
 import Gen.nonEmptyListOf
-import org.scalacheck.Arbitrary.{arbInt, arbDouble, arbLong, arbBool, arbChar}
+import org.scalacheck.Arbitrary.{arbBool, arbChar, arbDouble, arbInt, arbLong, arbOption}
 
 // Scala
 import scala.annotation.tailrec
@@ -25,11 +26,21 @@ object Generators {
 
   val nonEmptyStrGen: Gen[String] = Gen.nonEmptyListOf[Char](arbChar.arbitrary).map(_.mkString)
 
+  private def toNumString(neg: Boolean, int: Option[Int], point: Boolean, decimal: Option[Int]) = {
+    val s = if (neg) "-" else "" +
+      int.fold("")(_.toString) +
+      (if (point) "." else "") +
+      decimal.fold("")(_.toString)
+
+    if (s.length <= 1) "0" else s
+  }
+
   val numGen: Gen[TNum] = for {
-    int     <- intGen
+    neg     <- boolGen
+    int     <- arbOption(Arbitrary(posNum[Int])).arbitrary
     point   <- boolGen
-    decimal <- posNum[Int]
-  } yield TNum(BigDecimal(if (point) s"$int.$decimal" else s"$int"))
+    decimal <- arbOption(Arbitrary(posNum[Int])).arbitrary
+  } yield TNum(BigDecimal(toNumString(neg, int, point, decimal)))
 
   val tokGen: Gen[Tok] = Gen.oneOf(opGen, numGen)
 
