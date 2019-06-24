@@ -1,19 +1,19 @@
 package calc
 
-import calc.Lexer.{TNum, TOp, Tok}
-import calc.Parse.{ParseTree, POp, PNum}
+import calc.Lexer.{TNum, TOp, Tok, TParen}
+import calc.Parse.{ParseTree, POp, PNum, LParen, RParen}
 import calc.Exceptions.{EmptyInputErr, InvalidSequenceErr, MissingLeftInputErr, MissingRightInputErr}
 
-import scala.annotation.tailrec
 import scala.util.{Failure, Success, Try}
 
 // uses shunting-yard algorithm to build a parse tree. Could build BNF instead, but this is more generic.
 // https://en.wikipedia.org/wiki/Shunting-yard_algorithm
 private[calc] object Parser {
 
+  // TODO what does it think of "()"?
   def run(input: List[Tok]): Try[ParseTree] = {
-    @tailrec
-    def go(input: List[Tok], parseTree: List[ParseTree], shuntStack: List[TOp]): Try[ParseTree] = (input, parseTree, shuntStack) match {
+    //@tailrec
+    def go(input: List[Tok], parseTree: List[ParseTree], shuntStack: List[Tok]): Try[ParseTree] = (input, parseTree, shuntStack) match {
       case (Nil, res ::  Nil, Nil) =>
         Success(res)
 
@@ -46,8 +46,35 @@ private[calc] object Parser {
         if shunted.priority >= op.priority =>
         go(toks, POp(shunted, b, a) :: treeTail, shuntTail)
 
+      case ((op @ TOp(_)) :: tail, tree, stack @ TParen(LParen) :: _) =>
+        go(tail, tree, op :: stack)
+
+      case ((p @ TParen(LParen)) :: tail, tree, stack) =>
+        go(tail, tree, p :: stack)
+
+      case (TParen(RParen) :: tail, tree, stack) =>
+        def gogo(t: List[ParseTree], s: List[Tok]): (List[ParseTree], List[Tok]) =
+          (t, s) match {
+            case (newT, TParen(LParen) :: sTail) =>
+              (newT, sTail)
+
+            case (a :: b :: tTail, TOp(op) :: sTail) =>
+              gogo(POp(op, b, a) :: tTail, sTail)
+
+            case _ => (t, s) // TODO fix this
+          }
+        val (newTree, newStack) = gogo(tree, stack)
+        go(tail, newTree, newStack)
+
       case (_, _ :: Nil, TOp(op) :: Nil) =>
         Failure(MissingRightInputErr.from(op))
+
+        // (List(), -, 7),   List(PNum(3), PNum(2), PNum(1)),   List(*, (, +))
+
+//        (List(),  List(POp(-,PNum(3),PNum(7)), PNum(2), PNum(1)),   List())
+
+// 1 + (2 * 3) - 7
+//        (List(*, 3, ), -, 7),   List(PNum(2), PNum(1)),   List((, +))
     }
 
     go(input, List.empty, List.empty)

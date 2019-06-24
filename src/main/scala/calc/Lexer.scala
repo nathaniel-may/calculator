@@ -19,7 +19,10 @@ private[calc] object Lexer {
 
   sealed trait Tok
 
-  case class TParen(value: Paren) extends Tok
+  case class TParen(value: Paren) extends Tok {
+    override def toString: String = value.toString
+  }
+
   object TParen{
     val regex: Regex = "[)(]".r
 

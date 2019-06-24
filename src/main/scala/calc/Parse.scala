@@ -2,7 +2,7 @@ package calc
 
 import scala.math.BigDecimal
 
-object Parse {
+private[calc] object Parse {
 
   sealed trait ParseTree
   case class PNum(value: BigDecimal) extends ParseTree

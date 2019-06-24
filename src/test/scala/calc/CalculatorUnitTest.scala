@@ -21,12 +21,12 @@ class CalculatorUnitTest extends FlatSpec with Matchers {
   }
 
   it should "evaluate to the correct answer with parentheses" in {
-    Calculator.run("1 + (2 * 3) - 7") fold(fail(_), _ shouldBe 0)
-    Calculator.run("(1 - 3) + 6 / 2") fold(fail(_), _ shouldBe 1)
-    Calculator.run("4 / (8 - 3 * 2)") fold(fail(_), _ shouldBe 2)
-    Calculator.run("2 * (3 - 1) - 1") fold(fail(_), _ shouldBe 3)
-    Calculator.run("(2*(2+3)-2) / 4") fold(fail(_), _ shouldBe 4)
-    Calculator.run("(7 + 3)/(6 - 4)") fold(fail(_), _ shouldBe 5)
+    Calculator.run("1 + (2 * 3) - 7") fold(e => { println(e); fail(e) }, _ shouldBe 0)
+    Calculator.run("(1 - 3) + 6 / 2") fold(e => { println(e); fail(e) }, _ shouldBe 1)
+    Calculator.run("4 / (8 - 3 * 2)") fold(e => { println(e); fail(e) }, _ shouldBe 2)
+    Calculator.run("2 * (3 - 1) - 1") fold(e => { println(e); fail(e) }, _ shouldBe 3)
+    Calculator.run("(2*(2+3)-2) / 2") fold(e => { println(e); fail(e) }, _ shouldBe 4)
+    Calculator.run("(7 + 3)/(6 - 4)") fold(e => { println(e); fail(e) }, _ shouldBe 5)
   }
 
   it should "handle numbers beyond the scale of Double" in {
