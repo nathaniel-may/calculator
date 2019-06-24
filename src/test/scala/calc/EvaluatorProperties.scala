@@ -6,7 +6,7 @@ import org.scalacheck.Prop.forAllNoShrink
 
 // Project
 import calc.Exceptions.CalcCompilationException
-import calc.Language.Tok
+import calc.Lexer.Tok
 import calc.util.Generators.seqGen
 
 object EvaluatorProperties extends Properties("Evaluator"){

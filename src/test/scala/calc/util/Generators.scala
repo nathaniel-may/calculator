@@ -10,7 +10,8 @@ import org.scalacheck.Arbitrary.{arbBool, arbChar, arbDouble, arbInt, arbLong, a
 import scala.annotation.tailrec
 
 // Project
-import calc.Language, Language.{Tok, TNum, TOp}
+import calc.Lexer.{Tok, TNum, TOp}
+import calc.Parse.ops
 
 object Generators {
 
@@ -20,9 +21,9 @@ object Generators {
   val doubleGen:        Gen[Double]  = arbDouble.arbitrary
   val longGen:          Gen[Long]    = arbLong.arbitrary
   val boolGen:          Gen[Boolean] = arbBool.arbitrary
-  val opGen:            Gen[TOp]     = Gen.oneOf(Language.ops).map(TOp(_))
+  val opGen:            Gen[TOp]     = Gen.oneOf(ops).map(TOp(_))
   val numOpGen:         Gen[Char]    = Gen.numChar.flatMap { num =>
-      Gen.oneOf(num :: Language.ops.map(_.toString.charAt(0))) }
+      Gen.oneOf(num :: ops.map(_.toString.charAt(0))) }
 
   val nonEmptyStrGen: Gen[String] = Gen.nonEmptyListOf[Char](arbChar.arbitrary).map(_.mkString)
 

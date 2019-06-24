@@ -10,7 +10,7 @@ import scalaz.Monad
 import shuffle.FunctionalShuffle.{Rand, shuffle}
 
 // Project
-import calc.Language.{Tok, TNum, TOp}
+import calc.Lexer.{Tok, TNum, TOp}
 import calc.util.Generators.{longGen, numGen, opGen, seqGen}
 
 class ParserProperties extends Properties("Parser") {

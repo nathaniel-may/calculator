@@ -5,7 +5,7 @@ import org.scalacheck.{Arbitrary, Properties}
 import calc.util.Generators._
 
 import scala.annotation.tailrec
-import calc.Language.{Tok, TNum, TOp}
+import calc.Lexer.{Tok, TNum, TOp}
 
 
 object GeneratorProperties extends Properties("generators") {

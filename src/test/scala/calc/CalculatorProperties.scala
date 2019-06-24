@@ -8,7 +8,7 @@ import org.scalacheck.Properties
 import calc.util.Arbs._
 import calc.util.Generators._
 import calc.Exceptions._
-import calc.Language.TNum
+import calc.Lexer.TNum
 
 
 object CalculatorProperties extends Properties("calculator") {

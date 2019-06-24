@@ -7,7 +7,7 @@ import org.scalacheck.{Arbitrary, Gen, Properties}, Gen.nonEmptyListOf
 // Project
 import calc.util.Arbs._
 import calc.util.Generators._
-import calc.Language.{Tok, TNum, TOp}
+import calc.Lexer.{Tok, TNum, TOp}
 
 // TODO test for whitespace independence
 class LexerProperties extends Properties("Lexer") {

@@ -2,7 +2,7 @@ package calc.util
 
 import org.scalacheck.Arbitrary
 
-import calc.Language.{Tok, TNum, TOp}
+import calc.Lexer.{Tok, TNum, TOp}
 import calc.util.Generators.{tokGen, numGen, opGen}
 
 object Arbs {

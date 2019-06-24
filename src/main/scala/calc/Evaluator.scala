@@ -1,6 +1,6 @@
 package calc
 
-import calc.Language.{Add, Div, Mult, Op, Sub}
+import calc.Parse.{Add, Div, Mult, Op, Sub, ParseTree, PNum, POp}
 import calc.Exceptions.DivideByZeroErr
 
 import scala.math.BigDecimal

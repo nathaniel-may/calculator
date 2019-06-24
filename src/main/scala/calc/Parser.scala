@@ -1,6 +1,7 @@
 package calc
 
-import calc.Language.{TNum, TOp, Tok}
+import calc.Lexer.{TNum, TOp, Tok}
+import calc.Parse.{ParseTree, POp, PNum}
 import calc.Exceptions.{EmptyInputErr, InvalidSequenceErr, MissingLeftInputErr, MissingRightInputErr, UnknownCompilationErr}
 
 import scala.annotation.tailrec
