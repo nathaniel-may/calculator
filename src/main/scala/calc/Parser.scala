@@ -69,7 +69,7 @@ private[calc] object Parser {
       case (_, _, TParen(_) :: _) =>
         Failure(new MismatchedParensErr)
 
-      case (_, _ :: Nil, TOp(op) :: Nil) =>
+      case (_, _ :: Nil, TOp(op) :: _) =>
         Failure(MissingRightInputErr.from(op))
     }
 
