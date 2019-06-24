@@ -39,6 +39,7 @@ class CalculatorUnitTest extends FlatSpec with Matchers {
     Calculator.run("5 +")         fold(_ shouldBe a[MissingRightInputErr], _ => fail())
     Calculator.run("hello world") fold(_ shouldBe a[InvalidElementErr],    _ => fail())
     Calculator.run("()")          fold(_ shouldBe a[NothingToComputeErr],  _ => fail())
+    Calculator.run("")            fold(_ shouldBe a[NothingToComputeErr],  _ => fail())
     Calculator.run("(1+2")        fold(_ shouldBe a[MismatchedParensErr],  _ => fail())
     Calculator.run("1+2)+3")      fold(_ shouldBe a[MismatchedParensErr],  _ => fail())
   }

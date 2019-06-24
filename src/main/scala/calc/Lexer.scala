@@ -7,11 +7,11 @@ import cats.data.{NonEmptyList, StateT}
 
 import scala.math.BigDecimal
 import scala.util.matching.Regex
-import scala.util.Try
+import scala.util.{Try, Failure}
 
 // Project
 import calc.Parse.{Add, Div, Mult, Op, Sub, Paren, LParen, RParen}
-import calc.Exceptions.InvalidElementErr
+import calc.Exceptions.{InvalidElementErr, NothingToComputeErr}
 import calc.Implicits._
 import calc.Instances._
 
@@ -73,7 +73,8 @@ private[calc] object Lexer {
   val tokens: NonEmptyList[RegexLexer[Tok]] = NonEmptyList.of(
     (TParen.regex, s => TParen.from(s) toTry InvalidElementErr.from(s take 1)),
     (TNum.regex,   s => TNum.from(s)   toTry InvalidElementErr.from(s take 1)),
-    (TOp.regex,    s => TOp.from(s)    toTry InvalidElementErr.from(s take 1))
+    (TOp.regex,    s => TOp.from(s)    toTry InvalidElementErr.from(s take 1)),
+    ("^$".r,       _ => Failure(new NothingToComputeErr))
   )
 
   def lex[A](rl: RegexLexer[A]): StateT[Try, String, A] = {
