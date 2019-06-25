@@ -1,10 +1,11 @@
 package calc
 
-import cats.Applicative
 import cats.effect.{ExitCode, IO, IOApp}
 import cats.syntax.all._
 import scopt.OptionParser
 import scala.io.StdIn
+
+import Repl.repl
 
 
 object Main extends IOApp {
@@ -27,37 +28,24 @@ object Main extends IOApp {
         .text("repl is a command.")
     }
 
-  private def calculate(input: String) =
+  private[calc] def calculate(input: String) =
     Calculator.run(input)
       .fold(Left(_), Right(_))
 
-  private def printResult(res: Either[Throwable, BigDecimal]) =
+  private[calc] def printResult(res: Either[Throwable, BigDecimal]) =
     res match {
       case Right(ans) => (printlnIO(ans), ExitCode.Success)
       case Left(e)    => (printlnIO(e.getMessage), ExitCode.Error)
     }
 
-  private def printlnIO(x: Any): IO[Unit] =
+  private[calc] def printlnIO(x: Any): IO[Unit] =
     IO(println(x))
 
-  private def printIO(x: Any): IO[Unit] =
+  private[calc] def printIO(x: Any): IO[Unit] =
     IO(print(x))
 
-  private def readLineIO: IO[String] =
-    IO(StdIn.readLine())
-
-  private def repl: IO[Unit] = {
-    def go: IO[Unit] = for {
-      _   <- printlnIO("")
-      _   <- printIO("calc> ")
-      cmd <- readLineIO
-      _   <- Applicative[IO].unlessA(cmd.trim == "exit") {
-               printResult(calculate(cmd))._1 *> go
-             }
-    } yield ()
-
-    printlnIO(":::: This is the calc repl - type `exit` to quit ::::") *> go
-  }
+  private[calc] def readLineIO: IO[String] =
+    IO(StdIn.readLine)
 
   override def run(args: List[String]): IO[ExitCode] =
     parser.parse(args, ReplConfig) match {

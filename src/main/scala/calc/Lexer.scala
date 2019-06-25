@@ -15,7 +15,7 @@ import calc.Exceptions.{InvalidElementErr, NothingToComputeErr}
 import calc.Implicits._
 import calc.Instances._
 
-private[calc] object Lexer {
+object Lexer {
 
   sealed trait Tok
 
